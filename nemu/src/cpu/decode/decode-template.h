@@ -26,13 +26,25 @@ make_helper(concat(decode_i_, SUFFIX)) {
 make_helper(concat(decode_si_, SUFFIX)) {
 	op_src->type = OP_TYPE_IMM;
 
-	/* TODO: Use instr_fetch() to read ``DATA_BYTE'' bytes of memory pointed 
+	/* DONE: Use instr_fetch() to read ``DATA_BYTE'' bytes of memory pointed 
 	 * by ``eip''. Interpret the result as an signed immediate, and assign
 	 * it to op_src->simm.
 	 *
 	op_src->simm = ???
 	 */
-	panic("please implement me");
+#if DATA_BYTE == 1
+    signed char si;
+#elif DATA_BYTE == 4
+    int si;
+#else   
+#error unknown DATA_BYTE
+#endif
+    
+
+    uint32_t mask = op_dest->size < 4 ? (1 << (op_dest->size * 8)) - 1 : 0xffffffff;
+//    printf("op->size=%d mask=%x\n", (int) op_dest->size, mask);
+	si = instr_fetch(eip, DATA_BYTE);
+	op_src->simm = (uint32_t)((int) si) & mask;
 
 	op_src->val = op_src->simm;
 
@@ -68,8 +80,9 @@ static int concat3(decode_r_, SUFFIX, _internal) (swaddr_t eip, Operand *op) {
 }
 
 static int concat3(decode_rm_, SUFFIX, _internal) (swaddr_t eip, Operand *rm, Operand *reg) {
+    //printf("rm %p  reg %p  src %p dest %p\n", rm, reg, op_src, op_dest);
 	rm->size = DATA_BYTE;
-	int len = read_ModR_M(eip, rm, reg);
+	int len = concat(read_ModR_M_, SUFFIX)(eip, rm, reg);
 	reg->val = REG(reg->reg);
 
 #ifdef DEBUG
@@ -179,10 +192,11 @@ make_helper(concat(decode_rm_imm_, SUFFIX)) {
 	return len;
 }
 
-void concat(write_operand_, SUFFIX) (Operand *op, DATA_TYPE src) {
+// write_operand() moved to decode.h for inline
+/*void concat(write_operand_, SUFFIX) (Operand *op, DATA_TYPE src) {
 	if(op->type == OP_TYPE_REG) { REG(op->reg) = src; }
-	else if(op->type == OP_TYPE_MEM) { swaddr_write(op->addr, op->size, src); }
-	else { assert(0); }
-}
+	else { assert(op->type == OP_TYPE_MEM); swaddr_write(op->addr, op->size, src, op->sreg); }
+}*/
+
 
 #include "cpu/exec/template-end.h"

@@ -466,7 +466,7 @@ VIDEO_UpdateScreen(
    }
    else
    {
-	   incr_nr_draw();
+	   //incr_nr_draw();
 
 	   if (g_wShakeTime != 0) 
 	   {

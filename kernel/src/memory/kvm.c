@@ -53,7 +53,6 @@ void init_page(void) {
 		}
 	*/
 
-
 	/* make CR3 to be the entry of page directory */
 	cr3.val = 0;
 	cr3.page_directory_base = ((uint32_t)pdir) >> 12;
@@ -63,7 +62,10 @@ void init_page(void) {
 	cr0.val = read_cr0();
 	cr0.paging = 1;
 	write_cr0(cr0.val);
+	
 }
+
+
 
 /* GDT in the kernel's memory, whose virtual memory is greater than 0xC0000000. */
 static SegDesc gdt[NR_SEGMENTS];

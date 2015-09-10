@@ -1,0 +1,7 @@
+[1] 读了一些其他的代码
+
+  (1) 目前 NEMU 加载程序的方式是通过 ramdisk 完成的，ELF 只是做了读入其实根本没加载。
+  (2) 内存读写函数 (hw|ln|sw)addr_(read|write) 目前只是简单的对 dram_(read|write) 的包装。
+  (3) 各种指令的实现用到了各种宏黑魔法，不同数据长度的指令对应的函数的生成是根据 SUFFIX 与编写的模版进行的。
+      #define SUFFIX somesuffix & #include balabala & #undef SUFFIX ... next suffix
+

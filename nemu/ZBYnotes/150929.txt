@@ -1,0 +1,22 @@
+[1] 指令长度的测定
+
+  (1) 有时需在指令执行时使用当前指令的长度（例如 call, jcc）
+  (2) 使用变量 cur_instr_len 来保存/维护当前指令的长度
+  (3) 每条指令执行后，会在 monitor/cpu_exec.c 内检查返回的长度与被维护的相应长度是否相同
+  (4) 模板代码都加入了维护该变量的代码，单独实现的指令函数需要手动维护（即把返回值加到该变量上）
+
+[2] JCC 系列指令的实现
+
+  (1) 使用宏来生成具体实现
+  (2) JECXZ/JCXZ 指令比较特殊
+          JECXZ 具有 E3 ?? 的形式
+          JCXZ 具有 67:E3 ?? 的形式，67 是 address size override
+          
+  (*) 参考资料
+     address size override: http://www.mouseos.com/x64/doc3.html
+
+[3] 今天 ISC 课上，助教说 gcc 有编译选项可以在每条算数指令后面插入溢出检查指令，
+    还说可以使用 attribute 指定的方式来只为某个函数加入这种代码，
+    但是我上网没查到资料，只查到了这两个选项: -fwrapv -ftrapv
+    另外：builtin 自带海量 attribute 是什么意思？
+

@@ -1,15 +1,16 @@
 ##### global settings #####
 
-.PHONY: nemu entry all_testcase kernel run gdb test submit clean
+# 'count' add by ZBY
+.PHONY: nemu entry all_testcase kernel run gdb test submit clean count
 
 CC := gcc
 LD := ld
-CFLAGS := -MMD -Wall -Werror -c
+CFLAGS := -MMD -Wall -Werror -c -g
 
 LIB_COMMON_DIR := lib-common
 NEWLIBC_DIR := $(LIB_COMMON_DIR)/newlib
 NEWLIBC := $(NEWLIBC_DIR)/libc.a
-#FLOAT := obj/$(LIB_COMMON_DIR)/FLOAT.a
+FLOAT := obj/$(LIB_COMMON_DIR)/FLOAT.a
 
 include config/Makefile.git
 include config/Makefile.build
@@ -25,8 +26,8 @@ include lib-common/Makefile.part
 include kernel/Makefile.part
 include game/Makefile.part
 
-nemu: $(nemu_BIN)
-all_testcase: $(testcase_BIN)
+nemu: $(nemu_BIN) $(FLOAT)
+all_testcase: $(testcase_BIN) $(testcase_BIN_SOBJS)
 kernel: $(kernel_BIN)
 game: $(game_BIN)
 
@@ -48,12 +49,14 @@ clean-game:
 clean: clean-cpp
 	-rm -rf obj 2> /dev/null
 	-rm -f *log.txt entry $(FLOAT) 2> /dev/null
+#	cd ZBYcalc; make clean
 
 
 ##### some convinient rules #####
 
-USERPROG := obj/testcase/mov
-ENTRY := $(USERPROG)
+USERPROG := $(game_BIN)
+#USERPROG := obj/testcase/add-longlong
+ENTRY := $(kernel_BIN)
 
 entry: $(ENTRY)
 	objcopy -S -O binary $(ENTRY) entry

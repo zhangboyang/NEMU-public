@@ -1,4 +1,44 @@
-# ICS2015 Programming Assignment
+# ZBY 的公开版 PA
+仅供参考、对拍使用，抹掉了所有 git log。
+当前进度在 PA4，如果要切回之前时间点，把对应的宏、Makefile 改回去即可。
+
+
+# 计算机系统基础 课程大作业
+NEMU 是复旦大学计算机系统基础课的大作业，旨在实现一个教学用的 x86 虚拟机。
+通过课程的学习，逐渐向里面添加内容，最终的目标是将仙剑奇侠传 (SDLPAL) 移植进该虚拟机中。
+
+## 高级测试样例
+这里的测试样例的全部代码均可以在 https://github.com/zhangboyang/NEMU-testcase 找到。
+它们的主要来源如下：
+* 数据结构课程作业
+* 实现指令时顺手编写的样例
+* 遇到的与指令相关的坑
+
+## 针对运行速度的优化
+由于要在 NEMU 中运行仙剑奇侠传，因此做了许多速度优化，它们中的大部分仅在 DEBUG 被关闭时才启用。
+最终的结果是，在台式 i3 机器上可以流畅运行仙剑奇侠传(此时每秒钟执行约一亿条指令)。
+* 关闭 Cache、TLB、DDR 等会拖慢速度的部分
+* 启用 VFMEMORY 模块
+ * VFMEMORY = very fast memory
+ * 几乎完全重写的虚拟机内存模块
+ * 一般情况下的内存访问只需两次访存和一次判断和几次位运算
+ * 只在段转换的平坦模式下有效
+* 直接使用对应的汇编指令计算 EFLAGS，而非用位运算模拟
+* 关闭 UI 上的多数功能
+
+## 针对仙剑奇侠传 (SDLPAL) 的修改
+为了在 NEMU 中流畅运行仙剑奇侠传，仅仅对 NEMU 优化还不够，还需要对游戏代码本身进行优化。
+* 对 ColorShift 操作，由每次判断改为查表，花费少量空间和时间省去内层循环里的判断语句
+* 加入专门指令实现高精确度的计时器
+ * 废除原有的使用时钟中断作为计时依据的实现
+ * 实现专门指令，直接将真机上 clock_gettime() 返回的结果通入虚拟机
+ * 由于直接使用 clock_gettime()，计时精度由原本 10ms 增加到微秒级
+* 修改了一些遗漏的浮点指令(例如婶婶病倒时背景音乐的切换)
+* 一些计时功能(统计函数执行时间用)
+
+
+
+## ICS2015 Programming Assignment
 
 This project is the programming assignment of the class ICS(Introduction to Computer System) in Department of Computer Science and Technology, NanJing University.
 

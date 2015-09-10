@@ -2,12 +2,11 @@
 
 #define instr or
 
-static void do_execute () {
+static inline void do_execute () {
 	DATA_TYPE result = op_dest->val | op_src->val;
 	OPERAND_W(op_dest, result);
 
-	/* TODO: Update EFLAGS. */
-	panic("please implement me");
+	EFLAGS_B(result);
 
 	print_asm_template2();
 }

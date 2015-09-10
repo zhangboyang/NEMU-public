@@ -53,7 +53,7 @@ PAL_BattleMakeScene(
    int          i;
    PAL_POS      pos;
    LPBYTE       pSrc, pDst;
-   BYTE         b;
+   //BYTE         b;
 
    //
    // Draw the background
@@ -61,25 +61,38 @@ PAL_BattleMakeScene(
    pSrc = g_Battle.lpBackground->pixels;
    pDst = g_Battle.lpSceneBuf->pixels;
 
-   for (i = 0; i < g_Battle.lpSceneBuf->pitch * g_Battle.lpSceneBuf->h; i++)
-   {
-      b = (*pSrc & 0x0F);
-      b += g_Battle.sBackgroundColorShift;
+   // optimized by ZBY
+   ZBY_TIMING_BEGIN(2);
+   make_colorshift_table(g_Battle.sBackgroundColorShift);
+   if (0) { //if (g_Battle.sBackgroundColorShift == 0) {
+       memcpy(pDst, pSrc, g_Battle.lpSceneBuf->pitch * g_Battle.lpSceneBuf->h);
+   } else {
+       i = g_Battle.lpSceneBuf->pitch * g_Battle.lpSceneBuf->h;
+       while (i--)
+       {
+          /*b = (*pSrc & 0x0F);
+          
+          b += g_Battle.sBackgroundColorShift;
 
-      if (b & 0x80)
-      {
-         b = 0;
-      }
-      else if (b & 0x70)
-      {
-         b = 0x0F;
-      }
+          if (b & 0x80)
+          {
+             b = 0;
+          }
+          else if (b & 0x70)
+          {
+             b = 0x0F;
+          }
 
-      *pDst = (b | (*pSrc & 0xF0));
+          *pDst = (b | (*pSrc & 0xF0));
+          assert(*pDst == cs_table[*pSrc]);
+          */
+          *pDst = cs_table[*pSrc];
 
-      ++pSrc;
-      ++pDst;
+          ++pSrc;
+          ++pDst;
+       }
    }
+   ZBY_TIMING_END(2, "PAL_BattleMakeScene");
 
    PAL_ApplyWave(g_Battle.lpSceneBuf);
 
@@ -260,12 +273,14 @@ PAL_BattleFadeScene(
          // Blend the pixels in the 2 buffers, and put the result into the
          // backup buffer
          //
+         ZBY_TIMING_BEGIN(1);
          for (k = rgIndex[j]; k < gpScreen->pitch * gpScreen->h; k += 6)
          {
             a = ((LPBYTE)(g_Battle.lpSceneBuf->pixels))[k];
             b = ((LPBYTE)(gpScreenBak->pixels))[k];
 
-            if (i > 0)
+            // by ZBY
+            if (1) //if (a != b && i > 0)
             {
                if ((a & 0x0F) > (b & 0x0F))
                {
@@ -275,11 +290,10 @@ PAL_BattleFadeScene(
                {
                   b--;
                }
+               ((LPBYTE)(gpScreenBak->pixels))[k] = ((a & 0xF0) | (b & 0x0F));
             }
-
-            ((LPBYTE)(gpScreenBak->pixels))[k] = ((a & 0xF0) | (b & 0x0F));
          }
-
+         ZBY_TIMING_END(1, "PAL_BattleFadeScene");
          //
          // Draw the backup buffer to the screen
          //

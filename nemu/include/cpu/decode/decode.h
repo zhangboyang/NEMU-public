@@ -50,8 +50,21 @@ make_helper(decode_rm_imm_b);
 make_helper(decode_rm_imm_w);
 make_helper(decode_rm_imm_l);
 
-void write_operand_b(Operand *, uint8_t);
+/*void write_operand_b(Operand *, uint8_t);
 void write_operand_w(Operand *, uint16_t);
-void write_operand_l(Operand *, uint32_t);
+void write_operand_l(Operand *, uint32_t);*/
+
+static inline void write_operand_b(Operand *op, uint8_t src) {
+	if(op->type == OP_TYPE_REG) { reg_b(op->reg) = src; }
+	else { assert(op->type == OP_TYPE_MEM); swaddr_write(op->addr, op->size, src, op->sreg); }
+}
+static inline void write_operand_w(Operand *op, uint16_t src) {
+	if(op->type == OP_TYPE_REG) { reg_w(op->reg) = src; }
+	else { assert(op->type == OP_TYPE_MEM); swaddr_write(op->addr, op->size, src, op->sreg); }
+}
+static inline void write_operand_l(Operand *op, uint32_t src) {
+	if(op->type == OP_TYPE_REG) { reg_l(op->reg) = src; }
+	else { assert(op->type == OP_TYPE_MEM); swaddr_write(op->addr, op->size, src, op->sreg); }
+}
 
 #endif

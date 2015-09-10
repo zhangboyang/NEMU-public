@@ -11,8 +11,12 @@ static bool newkey;
 void keyboard_intr(uint8_t scancode) {
 	if(nemu_state == RUNNING && newkey == false) {
 		i8042_data_port_base[0] = scancode;
+		//void print_current_time(); print_current_time(); printf("  raise keyboard intr! scancode = %d\n", (int) scancode);
 		i8259_raise_intr(KEYBOARD_IRQ);
 		newkey = true;
+	} else {
+	    void print_current_time(); print_current_time();
+	    printf("%s%s  intr not sent! scancode = %d%s\n", c_bold, c_red, (int) scancode, c_normal);
 	}
 }
 

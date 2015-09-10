@@ -442,6 +442,8 @@ PAL_RNGPlay(
 
    for (; iStartFrame <= iEndFrame; iStartFrame++)
    {
+      //int i; for (i = 0; i < 10; i++) {
+      ZBY_TIMING_BEGIN(4);
       iTime = SDL_GetTicks() + iDelay;
 
       if (PAL_RNGBlitToSurface(iNumRNG, iStartFrame, gpScreen, fp) == -1)
@@ -467,6 +469,9 @@ PAL_RNGPlay(
          gpGlobals->fNeedToFadeIn = FALSE;
       }
 
+      //ZBY_TIMING_END(4, "PAL_RNGPlay");
+      //}
+      
       //
       // Delay for a while
       //

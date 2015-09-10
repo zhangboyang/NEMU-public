@@ -9,6 +9,7 @@
 #define concat3(x, y, z) concat(concat(x, y), z)
 #define concat4(x, y, z, w) concat3(concat(x, y), z, w)
 #define concat5(x, y, z, v, w) concat4(concat(x, y), z, v, w)
+#define concat6(x, y, z, u, v, w) concat5(concat(x, y), z, u, v, w)
 
 #define unalign_rw(addr, len)	(((unalign *)(addr))->concat(_, len))
 

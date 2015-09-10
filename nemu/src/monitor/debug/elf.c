@@ -8,6 +8,80 @@ static char *strtab = NULL;
 static Elf32_Sym *symtab = NULL;
 static int nr_symtab_entry;
 
+void enum_functions(void (*callback)(const char *name, unsigned start, unsigned len))
+{
+    int i;
+    for (i = 0; i < nr_symtab_entry; i++) {
+        const char *sym_name = symtab[i].st_name ? strtab + symtab[i].st_name : NULL;
+        uint32_t sym_size = symtab[i].st_size;
+        uint32_t sym_val = symtab[i].st_value;
+        if (ELF32_ST_TYPE(symtab[i].st_info) == STT_FUNC) {
+            callback(sym_name, sym_val, sym_size);
+        }
+    }
+}
+
+void show_elf_symbols() /* extract symbols from ELF file */
+{
+    int i;
+    printf(c_yellow "  %8s %4s %-7s %s" c_normal "\n", "value", "size", "type", "name");
+    for (i = 0; i < nr_symtab_entry; i++) {
+        const char *sym_name = symtab[i].st_name ? strtab + symtab[i].st_name : NULL;
+        const char *sym_type;
+        const char *sym_color;
+        switch (ELF32_ST_TYPE(symtab[i].st_info)) {
+            case STT_NOTYPE: sym_type = "NOTYPE"; sym_color = c_normal; break;
+            case STT_FILE  : sym_type = "FILE"; sym_color = c_normal; break;
+            case STT_OBJECT: sym_type = "OBJECT"; sym_color = c_green; break;
+            case STT_FUNC  : sym_type = "FUNC"; sym_color = c_purple; break;
+            default: sym_type = "UNKNOWN"; sym_color = c_normal; break;
+        }
+        uint32_t sym_size = symtab[i].st_size;
+        uint32_t sym_val = symtab[i].st_value;
+        if (sym_name)
+            printf("%s  %08x %04u %-7s %s" c_normal "\n", sym_color, sym_val, sym_size, sym_type, sym_name);
+    }
+}
+
+char *get_func_name(uint32_t loc, uint32_t *st, uint32_t *off)
+{
+    int i;
+    for (i = 0; i < nr_symtab_entry; i++) {
+        if (ELF32_ST_TYPE(symtab[i].st_info) == STT_FUNC) {
+            char *sym_name = symtab[i].st_name ? strtab + symtab[i].st_name : NULL;
+            uint32_t sym_size = symtab[i].st_size;
+            uint32_t sym_val = symtab[i].st_value;
+            if (sym_val <= loc && loc < sym_val + sym_size) {
+                if (st) *st = sym_val;
+                if (off) *off = loc - sym_val;
+                return sym_name;
+            }
+        }
+    }
+    return NULL;
+}
+
+uint32_t *get_symval_addr(char *sym_name, int sym_name_len) /* get val addr for expr() */
+{
+    /* Elf32_Addr must equal to uint32_t
+       since we use pointers without converting values
+       see below
+    */
+    assert(sizeof(Elf32_Addr) == sizeof(uint32_t));
+    
+    int i;
+    for (i = 0; i < nr_symtab_entry; i++) {
+        const char *cur_sym_name = symtab[i].st_name ? strtab + symtab[i].st_name : NULL;
+        uint32_t *cur_sym_val_addr = (uint32_t *) &symtab[i].st_value; // here
+        if (cur_sym_name) {
+            if (strncmp(cur_sym_name, sym_name, sym_name_len) == 0 && cur_sym_name[sym_name_len] == '\0')
+                return cur_sym_val_addr;
+        }
+    }
+    
+    return NULL;
+}
+
 void load_elf_tables(int argc, char *argv[]) {
 	int ret;
 	Assert(argc == 2, "run NEMU with format 'nemu [program]'");
@@ -16,15 +90,13 @@ void load_elf_tables(int argc, char *argv[]) {
 	FILE *fp = fopen(exec_file, "rb");
 	Assert(fp, "Can not open '%s'", exec_file);
 
-	uint8_t buf[4096];
-	/* Read the first 4096 bytes from the exec_file.
-	 * They should contain the ELF header and program headers. */
-	ret = fread(buf, 4096, 1, fp);
-	assert(ret == 1);
+	uint8_t buf[sizeof(Elf32_Ehdr)];
+	ret = fread(buf, sizeof(Elf32_Ehdr), 1, fp);
+	assert(ret == 1); FORCE_USE(ret);
 
 	/* The first several bytes contain the ELF header. */
 	Elf32_Ehdr *elf = (void *)buf;
-	char magic[] = {ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3};
+	char magic[] = {ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3}; FORCE_USE(magic);
 
 	/* Check ELF header */
 	assert(memcmp(elf->e_ident, magic, 4) == 0);		// magic number

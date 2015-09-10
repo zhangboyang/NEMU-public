@@ -1,7 +1,7 @@
-GAME := typing
-#GAME := nemu-pal
+#GAME := typing
+GAME := nemu-pal
 
-game_CFLAGS_EXTRA := -m32 -O2 -fno-builtin -fno-omit-frame-pointer -fno-stack-protector \
+game_CFLAGS_EXTRA := -m32 -O2 -fno-builtin -fomit-frame-pointer -fno-stack-protector \
 						-I$(LIB_COMMON_DIR) -I$(NEWLIBC_DIR)/include \
 						-Igame/src/$(GAME)/include
 $(eval $(call make_common_rules,game,$(game_CFLAGS_EXTRA)))
@@ -14,6 +14,8 @@ $(game_BIN): $(game_OBJS) $(FLOAT) $(NEWLIBC)
 	$(call make_command, $(LD), $(game_LDFLAGS), ld $@, $^)
 	$(call git_commit, "compile game")
 ifeq ($(GAME),nemu-pal)
-	dd if=/dev/null of=$(game_BIN) seek=2048
+#dd if=/dev/null of=$(game_BIN) seek=2048
+	ls -l $(game_BIN)
+	dd if=/dev/null of=$(game_BIN) seek=4096
 	cat `find $(game_SRC_DIR)/nemu-pal/data -type f | sort` >> $(game_BIN)
 endif

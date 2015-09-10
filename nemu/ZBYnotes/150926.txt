@@ -1,0 +1,22 @@
+[1] 阅读 CPU 执行指令的代码
+
+  [INSTR].c
+  (1) 多次重复定义 DATA_BYTE 并包含 [INSTR]-template.h 来生成各种操作数长度的指令形式
+  (2) make_helper_v 宏可以根据译码得出的 is_data_size_16 标志，自动决定操作数是 16 位还是 32 位，用于同一个 opcode 同时对应 16/32 位两种指令形式的情况
+  
+  [INSTR]-template.h
+  (1) do_execute() 其实是一个宏，它会根据情况被扩展成各种各样的形式
+  (2) make_instr_helper 宏根据当前情况，展开成先执行译码，再调用 do_execute() 的形式。用于指令形式不特殊，可以用 do_execute 处理的情况。
+  
+  [INSTR].h
+  (1) 该文件用于 all-instr.h，用于声明所有指令形式的函数原型
+  (2) make_helper(???_v) 表示该指令需要根据阶码情况动态确定操作数长度，生成 16/32 位对应的两种函数(_l, _w)
+  (3) make_helper(???_b) 表示该指令操作数长度为一个字节，生成 8 为对应的函数(_b)
+  
+  do_execute()
+  (1) 该函数用来执行指令所指定的操作。
+  (2) REG(some_register) 用来读取/写入 DATA_BYTE 对应的寄存器。some_register 具有 R_EAX 的形式
+  (3) MEM_R(addr) 用来读取内存，实质上是根据 DATA_BYTE 调用 swaddr_read()
+  (4) MEM_W(addr, data) 用来读取内存，实质上是根据 DATA_BYTE 调用 swaddr_write()
+  (5) OPERAND_W(op, data) 用来写数据到译码后的源/目的操作数，一般 op 为 op_dest，但偶尔会为 op_src, op_src2
+  (6) 可用 print_asm_template?() 打印当前指令的反汇编结果

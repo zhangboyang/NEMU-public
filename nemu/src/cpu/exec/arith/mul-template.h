@@ -2,7 +2,7 @@
 
 #define instr mul
 
-static void do_execute() {
+static inline void do_execute() {
 	uint64_t src = op_src->val;
 	uint64_t result = REG(R_EAX) * src;
 #if DATA_BYTE == 1
@@ -18,6 +18,7 @@ static void do_execute() {
 	/* There is no need to update EFLAGS, since no other instructions 
 	 * in PA will test the flags updated by this instruction.
 	 */
+	INVF_ALU();
 
 	print_asm_template1();
 }

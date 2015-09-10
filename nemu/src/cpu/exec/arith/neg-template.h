@@ -2,13 +2,16 @@
 
 #define instr neg
 
-static void do_execute() {
+static inline void do_execute() {
 	DATA_TYPE result = -op_src->val;
 	OPERAND_W(op_src, result);
 
 	/* There is no need to update EFLAGS, since no other instructions 
 	 * in PA will test the flags updated by this instruction.
+	 * NI KENG LE WO!!
 	 */
+	INVF_ALU();
+	WRITEF(CF, !!op_src->val);
 
 	print_asm_template1();
 }

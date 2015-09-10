@@ -1,9 +1,13 @@
-nemu_CFLAGS_EXTRA := -ggdb3 -O2
+nemu_CFLAGS_EXTRA := -O2 -ggdb3 -Ilib-common
 $(eval $(call make_common_rules,nemu,$(nemu_CFLAGS_EXTRA)))
 
-nemu_LDFLAGS := -lreadline
+nemu_LDFLAGS := -lreadline -lSDL
 
 $(nemu_BIN): $(nemu_OBJS)
+# add by ZBY
+	cd nemu; ./ZBYcount.sh
+#	cd ZBYcalc; make nemu
+#	$(call make_command, $(CC), $(nemu_LDFLAGS), ld $@, $^ ZBYcalc/calc.nemu.tab.o ZBYcalc/calc.nemu.lex.o)
 	$(call make_command, $(CC), $(nemu_LDFLAGS), ld $@, $^)
 	$(call git_commit, "compile NEMU")
 
@@ -22,3 +26,7 @@ cpp: $(PP_TARGET)
 
 clean-cpp:
 	-rm -f $(PP_TARGET) 2> /dev/null
+
+# add by ZBY
+count:
+	cd nemu; ./ZBYcount.sh

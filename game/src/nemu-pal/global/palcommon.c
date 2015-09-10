@@ -22,6 +22,7 @@
 //
 
 #include "palcommon.h"
+#include "colorshifttable.h"
 
 INT
 PAL_RLEBlitToSurface(
@@ -217,6 +218,11 @@ PAL_RLEBlitWithColorShift(
    //
    uiLen = uiWidth * uiHeight;
 
+   
+   
+   // ZBY
+   make_colorshift_table(iColorShift);
+   
    //
    // Start decoding and blitting the bitmap.
    //
@@ -266,22 +272,32 @@ PAL_RLEBlitWithColorShift(
             //
             // Put the pixel onto the surface (FIXME: inefficient).
             //
-            b = (lpBitmapRLE[j] & 0x0F);
-            if ((INT)b + iColorShift > 0x0F)
-            {
-               b = 0x0F;
+            
+            if (1) { //if (iColorShift != 0) { // by ZBY
+                if (0) {
+                    b = (lpBitmapRLE[j] & 0x0F);
+                    if ((INT)b + iColorShift > 0x0F)
+                    {
+                       b = 0x0F;
+                    }
+                    else if ((INT)b + iColorShift < 0)
+                    {
+                       b = 0;
+                    }
+                    else
+                    {
+                       b += iColorShift;
+                    }
+                    ((LPBYTE)lpDstSurface->pixels)[y * lpDstSurface->pitch + x] =
+                        (b | (lpBitmapRLE[j] & 0xF0));
+                } else {
+                    ((LPBYTE)lpDstSurface->pixels)[y * lpDstSurface->pitch + x] = cs_table[lpBitmapRLE[j]];
+                }
+            } else {
+                ((LPBYTE)lpDstSurface->pixels)[y * lpDstSurface->pitch + x] =
+                    lpBitmapRLE[j];
             }
-            else if ((INT)b + iColorShift < 0)
-            {
-               b = 0;
-            }
-            else
-            {
-               b += iColorShift;
-            }
-
-            ((LPBYTE)lpDstSurface->pixels)[y * lpDstSurface->pitch + x] =
-               (b | (lpBitmapRLE[j] & 0xF0));
+            
          }
          lpBitmapRLE += T;
          i += T;

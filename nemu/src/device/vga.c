@@ -52,19 +52,19 @@ void do_update_screen_graphic_mode() {
 	uint8_t (*vmem) [CTR_COL] = vmem_base;
 	SDL_Rect rect;
 	rect.x = 0;
-	rect.w = CTR_COL * 2;
-	rect.h = 2;
+	rect.w = CTR_COL * VGA_ZOOM;
+	rect.h = VGA_ZOOM;
 
 	for(i = 0; i < CTR_ROW; i ++) {
 		if(line_dirty[i]) {
 			for(j = 0; j < CTR_COL; j ++) {
 				uint8_t color_idx = vmem[i][j];
-				draw_pixel(2 * j, 2 * i, color_idx);
-				draw_pixel(2 * j, 2 * i + 1, color_idx);
-				draw_pixel(2 * j + 1, 2 * i, color_idx);
-				draw_pixel(2 * j + 1, 2 * i + 1, color_idx);
+				int s, t;
+				for (s = 0; s < VGA_ZOOM; s++)
+				    for (t = 0; t < VGA_ZOOM; t++)
+				        draw_pixel(VGA_ZOOM * j + s, VGA_ZOOM * i + t, color_idx);
 			}
-			rect.y = i * 2;
+			rect.y = i * VGA_ZOOM;
 			SDL_BlitSurface(screen, &rect, real_screen, &rect);
 		}
 	}

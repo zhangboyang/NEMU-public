@@ -1,0 +1,31 @@
+[1] 使 nemu 通过自检并能运行 mov.S 程序
+
+  (1) 修改 include/cpu/reg.h 的 TODO 处，用匿名的联合与结构体 (anonymous struct/union) 可以达到目的。
+  (2) 可以在 src/cpu/reg.c 添加更多测试。
+  (3) 使用 make run 编译 mov.S 与 nemu 并执行
+
+  (*) 参考资料
+    匿名联合与结构体: (google 'anonymous union')
+      http://stackoverflow.com/questions/1972003/how-to-compile-c-code-with-anonymous-structs-unions
+      http://stackoverflow.com/questions/3228104/anonymous-union-within-struct-not-in-c99
+    
+
+
+[2] 代码行数统计功能
+
+  (1) 脚本 ZBYcount.sh 用到 find, sed, wc 命令组合达到统计行数的目的。
+     find -name '*.[ch]'    查找所有 .c 与 .h 文件名，输出到 stdout
+     sed '/^\s*$/d'         删除所有仅有空白符组成的行，或者空行也删除
+     wc -l                  统计 stdin 读入数据的行数
+
+  (2) 在 makefile 里添加伪目标 count，自动在编译时执行行数统计。
+     好像 Makefile.part 文件里某处用到了 $^ 好像会出问题？所以我直接把代码抄了一遍。
+
+  (*) 参考资料
+      find 的使用:
+        http://www.cnblogs.com/wanqieddy/archive/2011/06/09/2076785.html
+      正则表达式30分钟入门教程:
+        http://deerchao.net/tutorials/regex/regex-1.htm
+      makefile 参考:
+    	http://wiki.ubuntu.org.cn/%E8%B7%9F%E6%88%91%E4%B8%80%E8%B5%B7%E5%86%99Makefile:%E4%B9%A6%E5%86%99%E5%91%BD%E4%BB%A4
+

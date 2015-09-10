@@ -136,6 +136,7 @@ Decompress(
    INT           DestSize
 )
 {
+   ZBY_TIMING_BEGIN(5);
    PYJ_1_FILEHEADER hdr = (PYJ_1_FILEHEADER)Source;
    unsigned char *src = (unsigned char *)Source;
    unsigned char *dest;
@@ -235,6 +236,7 @@ Decompress(
    }
    free(root);
 
+   ZBY_TIMING_END(5, "Decompress");
    return SWAP32(hdr->UncompressedLength);
 }
 

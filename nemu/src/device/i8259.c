@@ -39,11 +39,7 @@ static const char ffo_table[] = {
 static void do_i8259() {
 	int8_t master_irq = master.highest_irq;
 	if(master_irq == NO_INTR) {
-		/* TODO: Uncomment the following line after the ``INTR'' member
-		 * is added to the CPU_state structure.
-		 */
-		// cpu.INTR = false;
-		panic("uncomment the line above");
+		cpu.INTR = false; 
 		return;
 	}
 	else if(master_irq == 2) {
@@ -52,11 +48,8 @@ static void do_i8259() {
 	}
 
 	intr_NO = master_irq + IRQ_BASE;
-	/* TODO: Uncomment the following line after the ``INTR'' member
-	 * is added to the CPU_state structure.
-	 */
-	// cpu.INTR = true;
-	panic("uncomment the line above");
+
+	cpu.INTR = true;
 }
 
 /* device interface */

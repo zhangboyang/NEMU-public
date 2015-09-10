@@ -41,7 +41,7 @@
 
 	# Complete transition to 32-bit protected mode by using long jmp
 	# to reload %CS and %EIP.  The segment descriptors are set up with no
-	# translation, so that the mapping is still the identity mapping.
+	# translation, so that the mapping is still the identity mapping
 		ljmp    $GDT_ENTRY(1), $va_to_pa(start_cond)
 
 	start_cond:
@@ -49,11 +49,13 @@
 		movw    $GDT_ENTRY(2), %ax
 		movw    %ax, %ds          # %DS = %AX
 		movw    %ax, %es          # %ES = %AX
+//		movw    $GDT_ENTRY(3), %ax
 		movw    %ax, %ss          # %SS = %AX
 
 	# Set up a stack for C code.
 		movl $0, %ebp
 		movl $(128 << 20), %esp
+//        movl $0x4000000, %esp
 		jmp init				# never return
 
 	# GDT
@@ -62,6 +64,7 @@
 		MAKE_NULL_SEG_DESC                   # empty segment
 		MAKE_SEG_DESC(0xA, 0x0, 0xffffffff)  # code
 		MAKE_SEG_DESC(0x2, 0x0, 0xffffffff)  # data
+//		MAKE_SEG_DESC(0x2, 0x4000000, 0xffffffff)  # ss, temp
 
 	gdtdesc:                      # descriptor
 		.word   (gdtdesc - gdt - 1)    # limit = sizeof(gdt) - 1

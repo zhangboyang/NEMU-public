@@ -2,12 +2,9 @@
 
 #define instr inc
 
-static void do_execute () {
-	DATA_TYPE result = op_src->val + 1;
+static inline void do_execute () {
+	DATA_TYPE result = EFLAGS_BASE(op_src->val, 1, 0, 0, 0); /* inc will not update CF */
 	OPERAND_W(op_src, result);
-
-	/* TODO: Update EFLAGS. */
-	panic("please implement me");
 
 	print_asm_template1();
 }

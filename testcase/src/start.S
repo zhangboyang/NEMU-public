@@ -1,3 +1,4 @@
+#include "trap.h"
 .globl start
 start:
 # Set up a stack for C code. After the kernel is 
@@ -6,3 +7,5 @@ start:
 	movl $(128 << 20), %esp
 	subl $16, %esp		# keep the `bt' command happy
 	call main			# never return
+	
+	HIT_BAD_TRAP

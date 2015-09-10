@@ -14,7 +14,18 @@ void create_video_mapping() {
 	 * [0xa0000, 0xa0000 + SCR_SIZE) for user program. You may define
 	 * some page tables to create this mapping.
 	 */
-	panic("please implement me");
+	int pages = SCR_SIZE / PAGE_SIZE + !!(SCR_SIZE % PAGE_SIZE);
+	
+	extern void create_user_mapping(int uptable_id, unsigned physaddr, unsigned virtaddr);
+	
+	printk("create video mapping for user address space ...\n");
+	unsigned addr = 0xa0000;
+	int i;
+	for (i = 0; i < pages; i++) {
+	    create_user_mapping(0, addr, addr);
+	    addr += PAGE_SIZE;
+	}
+	    
 }
 
 void video_mapping_write_test() {

@@ -7,7 +7,80 @@
 
 int get_fps();
 
-void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *scrrect, 
+/*
+
+    [SCREEN]
+
+  *---> col, x, left, right, width
+  |
+  |
+  v row, y, top, bottom, height
+
+*/
+
+#define BYTE_PIXEL_OFFSET(dst, x, y) (((dst)->pitch) * (y) + (x))
+#define BYTE_PIXEL_PTR(dst, x, y) ({ \
+    SDL_Surface *__dst = (dst); \
+    assert(__dst->pitch == __dst->w); \
+    (((char *) (__dst->pixels)) + BYTE_PIXEL_OFFSET(__dst, x, y)); \
+})
+
+#define get_left(rect) ((rect)->x)
+#define get_top(rect) ((rect)->y)
+#define get_right(rect) (get_left(rect) + (rect)->w) // macro not safe
+#define get_bottom(rect) (get_top(rect) + (rect)->h) // macro not safe
+
+#define max(a, b) ((a) > (b) ? (a) : (b)) // macro not safe
+#define min(a, b) ((a) < (b) ? (a) : (b)) // macro not safe
+
+typedef int SDL_bool;
+#define SDL_TRUE (1)
+#define SDL_FALSE (0)
+SDL_bool SDL_IntersectRect(const SDL_Rect* A, const SDL_Rect* B, SDL_Rect* result)
+{
+    int left, right, top, bottom;
+    left = max(get_left(A), get_left(B));
+    top = max(get_top(A), get_top(B));
+    right = min(get_right(A), get_right(B));
+    bottom = min(get_bottom(A), get_bottom(B));
+    
+    if (right > left && bottom > top) {
+        result->x = left;
+        result->y = top;
+        result->w = right - left;
+        result->h = bottom - top;
+        return SDL_TRUE;
+    } else {
+        return SDL_FALSE;
+    }
+}
+
+
+void GetSurfaceRect(SDL_Surface *surface, SDL_Rect *rect)
+{
+    rect->x = 0;
+    rect->y = 0;
+    rect->w = surface->w;
+    rect->h = surface->h;
+}
+
+void SDL_GetClipRect(SDL_Surface *surface, SDL_Rect *rect)
+{
+    //printf("x=%d y=%d ", (int) surface->clip_rect.x, (int) surface->clip_rect.y);
+    //printf("h=%d w=%d\n", (unsigned) surface->clip_rect.h, (unsigned) surface->clip_rect.w);
+    SDL_Rect *clip_rect = &surface->clip_rect;
+    if (clip_rect->x == 0 && clip_rect->y == 0 && clip_rect->h == 0 && clip_rect->w == 0) {
+        GetSurfaceRect(surface, rect);
+    } else {
+        *rect = *clip_rect;
+    }
+    
+    assert(rect->x >= 0 && rect->y >= 0);
+    assert(rect->x + rect->w <= surface->w);
+    assert(rect->y + rect->h <= surface->h);
+}
+
+void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, 
 		SDL_Surface *dst, SDL_Rect *dstrect) {
 	assert(dst && src);
 
@@ -19,26 +92,97 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *scrrect,
 	 * is saved in ``dstrect'' after all clipping is performed
 	 * (``srcrect'' is not modified).
 	 */
+	
+	SDL_bool bret;
+	
+	// get src surface rect;
+	SDL_Rect src_surface_rect;
+	GetSurfaceRect(src, &src_surface_rect);
+	if (srcrect) {
+    	bret = SDL_IntersectRect(srcrect, &src_surface_rect, &src_surface_rect);
+        if (bret == SDL_FALSE) return;
+    }
+	
+	// get dst surface rect
+    SDL_Rect dst_surface_rect;
+    SDL_GetClipRect(dst, &dst_surface_rect);
+	if (dstrect) {
+	    SDL_Rect trect;
+    	trect.x = dstrect->x;
+	    trect.y = dstrect->y;
+	    trect.w = src_surface_rect.w;
+	    trect.h = src_surface_rect.h;
+	    bret = SDL_IntersectRect(&trect, &dst_surface_rect, &dst_surface_rect);
+        if (bret == SDL_FALSE) return;
+	}
 
-	assert(0);
+	
+	// calc height and width needed to copy
+	int copy_width = min(src_surface_rect.w, dst_surface_rect.w);
+	int copy_height = min(src_surface_rect.h, dst_surface_rect.h);
+	
+	// do real copy
+	int dst_line, src_line;
+	for (dst_line = get_top(&dst_surface_rect),
+	     src_line = get_top(&src_surface_rect);
+	     
+	        copy_height--;
+	        
+	            dst_line++,
+	            src_line++
+	    ) {
+	    memcpy(BYTE_PIXEL_PTR(dst, dst_surface_rect.x, dst_line), 
+	           BYTE_PIXEL_PTR(src, src_surface_rect.x, src_line),
+	           copy_width);
+	    assert(dst_line < dst->h);
+	    assert(src_line < src->h);
+	    assert(dst_surface_rect.x + copy_width <= dst->w);
+	    assert(src_surface_rect.x + copy_width <= src->w);
+	}
 }
 
 void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
 	assert(dst);
 	assert(color <= 0xff);
 
-	/* TODO: Fill the rectangle area described by ``dstrect''
+	/* DONE: Fill the rectangle area described by ``dstrect''
 	 * in surface ``dst'' with color ``color''. If dstrect is
 	 * NULL, fill the whole surface.
 	 */
-
-	assert(0);
+	
+	SDL_bool bret;
+	
+	// get dst surface rect
+    SDL_Rect dst_surface_rect;
+    SDL_GetClipRect(dst, &dst_surface_rect);
+    if (dstrect) {
+	    bret = SDL_IntersectRect(dstrect, &dst_surface_rect, &dst_surface_rect);
+        if (bret == SDL_FALSE) return;
+	}
+	
+	int fill_height, fill_width;
+	fill_width = dst_surface_rect.w;
+	fill_height = dst_surface_rect.h;
+	
+	// do real memset
+	int dst_line;
+	for (dst_line = get_top(&dst_surface_rect); fill_height--; dst_line++) {
+	    memset(BYTE_PIXEL_PTR(dst, dst_surface_rect.x, dst_line), color, fill_width);
+	    assert(dst_line < dst->h);
+	    assert(dst_surface_rect.x + fill_width <= dst->w);
+	}
 }
 
 void SDL_UpdateRect(SDL_Surface *screen, int x, int y, int w, int h) {
 	assert(screen);
 	assert(screen->pitch == 320);
 	if(screen->flags & SDL_HWSURFACE) {
+		// update entire video memory
+		ZBY_TIMING_BEGIN(0);
+        memcpy((void *) VMEM_ADDR, screen->pixels, screen->pitch * screen->h);
+        //ZBY_TIMING_END(0, "copy to video memory");
+		incr_nr_draw();
+		
 		if(x == 0 && y == 0) {
 			/* Draw FPS */
 			vmem = VMEM_ADDR;
@@ -46,11 +190,13 @@ void SDL_UpdateRect(SDL_Surface *screen, int x, int y, int w, int h) {
 			sprintf(buf, "%dFPS", get_fps());
 			draw_string(buf, 0, 0, 10);
 		}
+		
 		return;
 	}
 
-	/* TODO: Copy the pixels in the rectangle area to the screen. */
-
+    /* Copy the pixels in the rectangle area to the screen. */
+    // ZBY: this is no need to do this
+    //      since we directly write to video memory
 	assert(0);
 }
 
@@ -79,8 +225,8 @@ void SDL_SetPalette(SDL_Surface *s, int flags, SDL_Color *colors,
 	memcpy(s->format->palette->colors, colors, sizeof(SDL_Color) * ncolors);
 
 	if(s->flags & SDL_HWSURFACE) {
-		/* TODO: Set the VGA palette by calling write_palette(). */
-		assert(0);
+		/* DONE: Set the VGA palette by calling write_palette(). */
+		write_palette(colors, ncolors);
 	}
 }
 
@@ -127,8 +273,17 @@ SDL_Surface* SDL_CreateRGBSurface(uint32_t flags, int width, int height, int dep
 	s->flags = flags;
 	s->w = width;
 	s->h = height;
+	
+	/* ZBY: init clip_rect */
+	s->clip_rect.x = 0;
+	s->clip_rect.y = 0;
+	s->clip_rect.w = s->w;
+	s->clip_rect.h = s->h;
+	
 	s->pitch = (width * depth) >> 3;
-	s->pixels = (flags & SDL_HWSURFACE ? (void *)VMEM_ADDR : malloc(s->pitch * height));
+	// ZBY: alloc buffer for SDL_HWSURFACE since directly write to VMEM is slow
+	//s->pixels = (flags & SDL_HWSURFACE ? (void *)VMEM_ADDR : malloc(s->pitch * height));
+	s->pixels = malloc(s->pitch * height);
 	assert(s->pixels);
 
 	return s;

@@ -25,4 +25,22 @@
 
 uint32_t mm_malloc(uint32_t, int len);
 
+
+
+/* useful macros by ZBY */
+#define PAGE_SHIFT 12
+
+#define GET_PAGE_OFFSET(addr) ((addr) & 0xfff)
+#define GET_PAGE_NUMBER(addr) ((addr) >> 12)
+#define ROUND_TO_PAGE(addr) ((addr) & 0xfffff000)
+
+#define GET_PAGE_PAGE(addr) (((addr) >> 12) & 0x3ff)
+#define GET_PAGE_DIR(addr) (((addr) >> 22) & 0x3ff)
+
+#define GET_PAGE_FRAME(e) ((e) & 0xfffff000)
+#define PAGE_PRESENT(e) ((e) & 1)
+
+#define PADDR_TO_KADDR(addr) ((void *) ((addr) + KOFFSET))
+
+
 #endif

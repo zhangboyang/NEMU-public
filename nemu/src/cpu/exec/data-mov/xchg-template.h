@@ -2,7 +2,7 @@
 
 #define instr xchg
 
-static void do_execute () {
+static inline void do_execute () {
 	DATA_TYPE temp = op_src->val;
 	OPERAND_W(op_src, op_dest->val);
 	OPERAND_W(op_dest, temp);

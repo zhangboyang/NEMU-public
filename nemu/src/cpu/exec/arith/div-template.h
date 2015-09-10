@@ -2,7 +2,7 @@
 
 #define instr div
 
-static void do_execute() {
+static inline void do_execute() {
 	uint64_t a;
 	uint32_t b = (DATA_TYPE)op_src->val;
 #if DATA_BYTE == 1
@@ -12,6 +12,7 @@ static void do_execute() {
 #endif
 	REG(R_EAX) = a / b;
 	REG(R_EDX) = a % b;
+	INVF_ALU();
 
 	print_asm_template1();
 }

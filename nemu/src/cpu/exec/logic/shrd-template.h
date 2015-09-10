@@ -3,7 +3,7 @@
 #define instr shrd
 
 #if DATA_BYTE == 2 || DATA_BYTE == 4
-static void do_execute () {
+static inline void do_execute () {
 	DATA_TYPE in = op_dest->val;
 	DATA_TYPE out = op_src2->val;
 
@@ -16,6 +16,7 @@ static void do_execute () {
 		count --;
 	}
 
+    INVF_ALU();
 	OPERAND_W(op_src2, out);
 
 	print_asm("shrd" str(SUFFIX) " %s,%s,%s", op_src->str, op_dest->str, op_src2->str);
@@ -27,6 +28,16 @@ make_helper(concat(shrdi_, SUFFIX)) {
 	do_execute();
 	return len + 1;
 }
+
+make_helper(concat(shrd_cl_, SUFFIX)) {
+	int len = concat(decode_rm2r_, SUFFIX) (eip + 1);
+	op_dest->val = REG(op_dest->reg);
+	*op_src2 = *op_src; /* small hack */
+	op_src->val = REG(R_CL);
+	do_execute();
+	return len + 1;
+}
+
 #endif
 
 #include "cpu/exec/template-end.h"

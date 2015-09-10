@@ -4,6 +4,7 @@
 void init_page();
 void init_serial();
 void init_ide();
+void init_keyboard();
 void init_i8259();
 void init_segment();
 void init_idt();
@@ -25,7 +26,7 @@ void init() {
 	 * is located at 0xc0100000, which is set by the linking options in Makefile.
 	 * Before setting up correct paging, no global variable can be used. */
 	init_page();
-
+	
 	/* After paging is enabled, transform %esp to virtual address. */
 	asm volatile("addl %0, %%esp" : : "i"(KOFFSET));
 #endif
@@ -58,6 +59,11 @@ void init_cond() {
 	/* Initialize the IDE driver. */
 	init_ide();
 
+    // the game will register keyboard interrupt
+    // no need to init kernel's keyboard driver
+	/* Initialize the keyboard driver. */
+	//init_keyboard();
+	
 	/* Enable interrupts. */
 	sti();
 #endif
@@ -95,12 +101,16 @@ void init_cond() {
 	/* Set the %esp for user program, which is one of the
 	 * convention of the "advanced" runtime environment. */
 	asm volatile("movl %0, %%esp" : : "i"(KOFFSET));
+	
+	// leave a page for stack, speed up memory access, see vfmemory.c
+	__asm__ __volatile__ ("sub $0x2000, %esp");
 #endif
 
 	/* Keep the `bt' command happy. */
 	asm volatile("movl $0, %ebp");
 	asm volatile("subl $16, %esp");
 
+    //__asm __volatile("int3");
 	/* Here we go! */
 	((void(*)(void))eip)();
 
