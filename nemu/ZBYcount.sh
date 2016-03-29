@@ -15,5 +15,5 @@ echo -ne '\x1b[1m'
 echo "line count: $all"
 echo -ne '\x1b[0m'
 
-echo "$date $all" >> ZBYlclog.txt
+#echo "$date $all" >> ZBYlclog.txt
 
