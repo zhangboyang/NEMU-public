@@ -44,7 +44,7 @@ int test(int a, int b, char flags[], int g1, int g2)
         
         :"=m"(ret)
         :"m"(a), "m"(b), "m"(flags), "m"(g1), "m"(g2)
-        :"eax", "ecx", "edx");
+        :"eax", "ecx", "edx", "memory");
     return ret;
 }
 
