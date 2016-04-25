@@ -961,7 +961,7 @@ extern int ui_safe_read_failed;
 void ui_mainloop() {
 	while(1) {
 	    char *input = rl_gets();
-	    char *saveptr;
+	    char *saveptr = NULL;
 	    while (1) {
 		    char *str = strtok_r(input, ";", &saveptr);
 		    input = NULL;
