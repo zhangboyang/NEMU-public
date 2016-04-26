@@ -38,7 +38,14 @@ void raise_intr(uint8_t NO) {
 	
 	load_segment(R_CS, next_cs);
 	cpu.EIP = next_eip;
-	cpu.EFLAGS.IF = 0;
+	
+	// 110 for interrupt gate, 111 for trap gate, 100 for task gate
+	int type = desc >> (16 + 16 + 3 + 5) & 7;
+	if (type == 6) {
+	    cpu.EFLAGS.IF = 0; // should clear IF when going through interrupt gate
+	}
+	//printf("type=%d\n", type);
+	
 	
 	/* Jump back to cpu_exec() */
 	longjmp(jbuf, 1);
