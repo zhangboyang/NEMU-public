@@ -10,12 +10,13 @@ $(eval $(call make_common_rules,game,$(game_CFLAGS_EXTRA)))
 game_OBJS := $(filter $(game_OBJ_DIR)/common/% $(game_OBJ_DIR)/$(GAME)/%,$(game_OBJS))
 game_LDFLAGS := -m elf_i386 -e game_init
 
+.PHONY: $(game_BIN)
 $(game_BIN): $(game_OBJS) $(FLOAT) $(NEWLIBC)
 	$(call make_command, $(LD), $(game_LDFLAGS), ld $@, $^)
 	$(call git_commit, "compile game")
 ifeq ($(GAME),nemu-pal)
-#dd if=/dev/null of=$(game_BIN) seek=2048
-	ls -l $(game_BIN)
-	dd if=/dev/null of=$(game_BIN) seek=4096
-	cat `find $(game_SRC_DIR)/nemu-pal/data -type f | sort` >> $(game_BIN)
+	dd if=/dev/null of=$(game_BIN) bs=512 seek=4096
+	game/gendisk.sh `find $(game_SRC_DIR)/nemu-pal/data -type f | sort` >> $(game_BIN)
 endif
+
+

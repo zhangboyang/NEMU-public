@@ -2,7 +2,7 @@
 #include <string.h>
 
 typedef struct {
-	char *name;
+	char name[20];
 	uint32_t size;
 	uint32_t disk_offset;
 } file_info;
@@ -10,37 +10,11 @@ typedef struct {
 enum {SEEK_SET, SEEK_CUR, SEEK_END};
 
 /* This is the information about all files in disk. */
-#define DISK_DATA_OFFSET (1048576)
-
-static const file_info file_table[] = {
-	{"1.rpg", 188864, DISK_DATA_OFFSET + 1048576}, 
-	{"2.rpg", 188864, DISK_DATA_OFFSET + 1237440},
-	{"3.rpg", 188864, DISK_DATA_OFFSET + 1426304}, 
-	{"4.rpg", 188864, DISK_DATA_OFFSET + 1615168},
-	{"5.rpg", 188864, DISK_DATA_OFFSET + 1804032}, 
-	{"abc.mkf", 1022564, DISK_DATA_OFFSET + 1992896},
-	{"ball.mkf", 134704, DISK_DATA_OFFSET + 3015460}, 
-	{"data.mkf", 66418, DISK_DATA_OFFSET + 3150164},
-	{"desc.dat", 16027, DISK_DATA_OFFSET + 3216582}, 
-	{"fbp.mkf", 1128064, DISK_DATA_OFFSET + 3232609},
-	{"fire.mkf", 834728, DISK_DATA_OFFSET + 4360673}, 
-	{"f.mkf", 186966, DISK_DATA_OFFSET + 5195401},
-	{"gop.mkf", 11530322, DISK_DATA_OFFSET + 5382367}, 
-	{"map.mkf", 1496578, DISK_DATA_OFFSET + 16912689},
-	{"mgo.mkf", 1577442, DISK_DATA_OFFSET + 18409267}, 
-	{"m.msg", 188232, DISK_DATA_OFFSET + 19986709},
-	{"mus.mkf", 331284, DISK_DATA_OFFSET + 20174941}, 
-	{"pat.mkf", 8488, DISK_DATA_OFFSET + 20506225},
-	{"rgm.mkf", 453202, DISK_DATA_OFFSET + 20514713}, 
-	{"rng.mkf", 4546074, DISK_DATA_OFFSET + 20967915},
-	{"sss.mkf", 557004, DISK_DATA_OFFSET + 25513989}, 
-	{"voc.mkf", 1997044, DISK_DATA_OFFSET + 26070993},
-	{"wor16.asc", 5374, DISK_DATA_OFFSET + 28068037}, 
-	{"wor16.fon", 82306, DISK_DATA_OFFSET + 28073411},
-	{"word.dat", 5650, DISK_DATA_OFFSET + 28155717},
-};
-
-#define NR_FILES (sizeof(file_table) / sizeof(file_table[0]))
+#define DISK_DATA_OFFSET (512 * 4096)
+#define FILE_TABLE_LINE_SIZE 16
+#define MAX_FILES 100
+static file_info file_table[MAX_FILES];
+static int fs_init_flag = 0;
 
 void ide_read(uint8_t *, uint32_t, uint32_t);
 void ide_write(uint8_t *, uint32_t, uint32_t);
@@ -53,7 +27,7 @@ typedef struct {
 } Fstate;
 
 #define FD_START (3)
-#define FD_LIMIT (NR_FILES + FD_START) // make space for stdin, out, err
+#define FD_LIMIT (MAX_FILES + FD_START) // make space for stdin, out, err
 #define FILE_STATE_BY_FD(fd) (file_state[(fd) - FD_START])
 #define FILE_TABLE_BY_FD(fd) (file_table[(fd) - FD_START])
 
@@ -70,11 +44,60 @@ static void fs_rawwrite(unsigned raw_offset, void *buf, int len)
     ide_write(buf, raw_offset, len);
 }
 
+
+void fs_init()
+{
+    unsigned offset = DISK_DATA_OFFSET;
+    
+    int nr_files = 0;
+    unsigned totsz = 0;
+    
+    memset(file_table, 0, sizeof(file_table));
+    
+    char buf[FILE_TABLE_LINE_SIZE + 1] = {};
+    while (1) {
+        // read filename part from file table
+        fs_rawread(buf, offset, FILE_TABLE_LINE_SIZE);
+        offset += FILE_TABLE_LINE_SIZE;
+        char str[FILE_TABLE_LINE_SIZE + 1];
+        strcpy(str, strtok(buf, " "));
+
+        if (strcmp(str, "END_OF_LIST") == 0) break;
+        
+        // read filesize part from file table
+        fs_rawread(buf, offset, FILE_TABLE_LINE_SIZE);
+        offset += FILE_TABLE_LINE_SIZE;
+        unsigned sz = 0;
+        char *ptr;
+        for (ptr = buf; *ptr && *ptr != ' '; ptr++)
+            sz = sz * 10 + *ptr - '0';
+        
+        if (nr_files < MAX_FILES) {
+            strcpy(file_table[nr_files].name, str);
+            file_table[nr_files].size = sz;
+            file_table[nr_files].disk_offset = totsz; // need fix later
+            totsz += sz;
+            nr_files++;
+            
+            printk("fs_init(): name = %s, size = 0x%08x\n", str, sz);
+        }
+    }
+    
+    // fix disk_offset
+    int i;
+    for (i = 0; i < nr_files; i++) {
+        file_table[i].disk_offset += offset;
+    }
+    
+    fs_init_flag = 1;
+}
+
 int fs_open(const char *pathname, int flags)
 {
+    if (!fs_init_flag) fs_init();
     int fd;
     for (fd = FD_START; fd < FD_LIMIT; fd++)
-        if (strcmp(pathname, FILE_TABLE_BY_FD(fd).name) == 0)
+        if (strcasecmp(pathname, FILE_TABLE_BY_FD(fd).name) == 0)
             break;
     assert(fd < FD_LIMIT);
 
