@@ -160,7 +160,7 @@ void show_tlb()
 
 hwaddr_t page_translate(lnaddr_t addr)
 {
-
+    if (unlikely(!cpu.PE || !cpu.PG)) return addr;
     unsigned vpn = GET_PAGE_NUMBER_INPLACE(addr);
     struct tlb_entry *e = find_tlb_entry(vpn);
     if (e) { // hit
