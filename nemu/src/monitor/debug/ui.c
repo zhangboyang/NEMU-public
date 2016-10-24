@@ -179,8 +179,10 @@ void print_registers()
     
     printf("  " c_yellow "ES: " c_normal "%04X B:%08X L:%08X\n", cpu.ES, cpu.seg_base[R_ES], cpu.seg_limit[R_ES]);
     printf("  " c_yellow "CS: " c_normal "%04X B:%08X L:%08X\n", cpu.CS, cpu.seg_base[R_CS], cpu.seg_limit[R_CS]);
-    printf("  " c_yellow "DS: " c_normal "%04X B:%08X L:%08X\n", cpu.DS, cpu.seg_base[R_DS], cpu.seg_limit[R_DS]);
     printf("  " c_yellow "SS: " c_normal "%04X B:%08X L:%08X\n", cpu.SS, cpu.seg_base[R_SS], cpu.seg_limit[R_SS]);
+    printf("  " c_yellow "DS: " c_normal "%04X B:%08X L:%08X\n", cpu.DS, cpu.seg_base[R_DS], cpu.seg_limit[R_DS]);
+    printf("  " c_yellow "FS: " c_normal "%04X B:%08X L:%08X\n", cpu.FS, cpu.seg_base[R_FS], cpu.seg_limit[R_FS]);
+    printf("  " c_yellow "GS: " c_normal "%04X B:%08X L:%08X\n", cpu.GS, cpu.seg_base[R_GS], cpu.seg_limit[R_GS]);
 
 }
 
@@ -719,7 +721,7 @@ static int cmd_zs(char *args)
 
 
 extern char *exec_file;
-#define MAX_TXT_LINE 16384
+#define MAX_TXT_LINE 1048576
 char *txt_line[MAX_TXT_LINE];
 int txt_line_cnt = -1;
 

@@ -11,7 +11,7 @@ void ide_read(uint8_t *, uint32_t, uint32_t);
 void ramdisk_read(uint8_t *, uint32_t, uint32_t);
 #endif
 
-#define STACK_SIZE (1 << 20)
+#define STACK_SIZE ((1 << 20) * 16)
 
 void create_video_mapping();
 uint32_t get_ucr3();
@@ -35,6 +35,17 @@ static void alloc_virtual_memory(void *dest, int len)
     }
 }*/
 
+unsigned mmap_anonymous(unsigned length)
+{
+    // check alignment
+    assert((length & (PAGE_SIZE - 1)) == 0);
+    static unsigned user_mmap_start = 0x40000000;
+    unsigned physaddr = mm_malloc(user_mmap_start, length);
+    unsigned virtaddr = user_mmap_start;
+    user_mmap_start += length;
+    memset(PADDR_TO_KADDR(physaddr), 0, length);
+    return virtaddr;
+}
 static unsigned alloc_one_clean_page(unsigned virtaddr)
 {
     unsigned physaddr = mm_malloc(virtaddr, PAGE_SIZE);

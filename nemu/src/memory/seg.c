@@ -21,9 +21,25 @@ lnaddr_t seg_translate(swaddr_t addr, size_t len, uint8_t sreg)
 }
 
 
+int seg_gs_prepare_selector, seg_gs_prepare_base, seg_gs_prepare_limit;
 
 void load_segment(int sreg_index, int selector)
 {
+    if (sreg_index == 5) { // GS segment
+        assert(seg_gs_prepare_selector == selector);
+        printf("load gs segment with %04X B:%08X L:%08X\n",
+            seg_gs_prepare_selector, seg_gs_prepare_base, seg_gs_prepare_limit);
+        cpu.seg_reg[5] = seg_gs_prepare_selector;
+        cpu.seg_base[5] = seg_gs_prepare_base;
+        cpu.seg_limit[5] = seg_gs_prepare_limit;
+        return;
+    }
+
+    if (sreg_index >= 4) {
+        panic("nemu: unsupported segment, sreg_index = %d, selector = 0x%08x\n", sreg_index, selector);
+        return;
+    }
+
 	int selector_index = selector >> 3;
 	unsigned long long desc;
 	uint32_t desc_data[2];
@@ -42,15 +58,17 @@ void load_segment(int sreg_index, int selector)
     // check for flat mode
     int i;
     cpu.seg_is_flat = 1;
-    for (i = 0; i < 6; i++)
+    for (i = 0; i < 6; i++) {
+        if (i == 5) continue;
         if (cpu.seg_base[i] != 0 || cpu.seg_limit[i] != 0xffffffff) {
             cpu.seg_is_flat = 0;
             break;
         }
+    }
 #ifdef DEBUG
     if (!SEG_PRESENT(desc)) {
         if (safe_read_flag) safe_read_failed = 1;
-        else panic("can't load segment that not present");
+        else panic_to_ui("can't load segment that not present");
     }
 #endif
 

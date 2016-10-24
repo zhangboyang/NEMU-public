@@ -13,11 +13,15 @@ PDE* get_kpdir();
 uint32_t brk = 0;
 
 /* The brk() system call handler. */
-void mm_brk(uint32_t new_brk) {
+// return value is current brk
+uint32_t mm_brk(uint32_t new_brk) {
 	if(new_brk > brk) {
 		mm_malloc(brk, new_brk - brk);
 	}
-	brk = new_brk;
+	if (new_brk > 0) {
+        brk = new_brk;
+    }
+    return brk;
 }
 
 void init_mm() {

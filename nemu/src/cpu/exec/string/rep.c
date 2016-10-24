@@ -5,12 +5,12 @@ make_helper(exec);
 make_helper(rep) {
 	int len;
 	int count = 0;
-	if(instr_fetch(eip + 1, 1) == 0xc3) {
+    int op = instr_fetch(eip, 1);
+	if (instr_fetch(eip + 1, 1) == 0xc3) {
 		/* repz ret */
 		exec(eip + 1);
 		len = 0;
-	}
-	else {
+	} else {
 		while(cpu.ecx) {
 			exec(eip + 1);
 			count ++;
@@ -30,7 +30,13 @@ make_helper(rep) {
 				|| ops_decoded.opcode == 0xa7	    // cmpsw
 				|| ops_decoded.opcode == 0xae	    // scasb
 				|| ops_decoded.opcode == 0xaf) {	// scasw
-			    if (READF(ZF) == 0) break;
+                if (op == 0xf3) { // rep, repe
+    			    if (READF(ZF) == 0) break;
+                } else if (op == 0xf2) { // repne
+                    if (READF(ZF) == 1) break;
+                } else {
+                    panic("invalid rep op %02X", op);
+                }
 			}
 			    
 		}
@@ -39,7 +45,8 @@ make_helper(rep) {
 
 #ifdef DEBUG
 	char temp[80];
-	sprintf(temp, "rep %s", assembly);
+	if (op == 0xf3) sprintf(temp, "rep %s", assembly);
+	if (op == 0xf2) sprintf(temp, "repne %s", assembly);
 	sprintf(assembly, "%s[cnt = %d]", temp, count);
 #endif
 	

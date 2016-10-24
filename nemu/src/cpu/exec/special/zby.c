@@ -4,37 +4,6 @@
 #include <time.h>
 #include <setjmp.h>
 
-
-#define F2f(x) ((int)(x) / 65536.0)
-static int Fmul(int a, int b)
-{
-    long long la = a, lb = b;
-    return (la * lb) >> 16;
-}
-
-static int Fdiv(int a, int b)
-{
-    long long la = a, lb = b;
-    la <<= 16; // must be LL shift
-    return la / lb;
-}
-
-static int f2F(int f)
-{
-    volatile union {
-        float a;
-        int b;
-    } x;
-    
-    x.b = f;
-    //printf("%f to ", (double)x.a);
-    return (double)x.a * 0x10000;
-}
-
-
-
-
-
 static void output_string(uint32_t str)
 {
     int ch;
@@ -63,25 +32,9 @@ make_helper(zby) {
     
 	print_asm("zby (eax = %d)", cpu.eax);
 
+//    panic_to_ui("ZBY instruction is disabled!");
+
 	switch (cpu.EAX) {
-	    case 0: // Fmul
-	        cpu.EAX = Fmul(cpu.ECX, cpu.EDX);
-	        //printf("mul(%f, %f)=%f\n", F2f(cpu.ECX), F2f(cpu.EDX), F2f(cpu.EAX));
-	        break;
-	        
-	    case 1: // Fdiv
-	        cpu.EAX = Fdiv(cpu.ECX, cpu.EDX);
-	        //printf("div(%f, %f)=%f\n", F2f(cpu.ECX), F2f(cpu.EDX), F2f(cpu.EAX));
-	        break;
-	        
-	    case 2: // f2F
-	        cpu.EAX = f2F(cpu.ECX);
-	        //printf("%f\n", F2f(cpu.EAX));
-	        break;
-	        
-	        
-	    
-	    
 	    case 100:
 	        printf("ZBY: ");
 	        output_string(cpu.ECX); // output string from VM
@@ -109,11 +62,8 @@ make_helper(zby) {
 	        break;
 	    
 	    default:
-	        printf("\33[1;31mnemu: INVALID ZBY INSTRUCTION, EAX = 0x%08x\33[0m at eip = 0x%08x\n\n",
+	        panic_to_ui("\33[1;31mnemu: INVALID ZBY INSTRUCTION, EAX = 0x%08x\33[0m at eip = 0x%08x\n\n",
 					cpu.eax, cpu.eip);
-			nemu_state = END;
-			extern jmp_buf jbuf;
-		    longjmp(jbuf, 1);
 	}
 
 	return 1;

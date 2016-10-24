@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <setjmp.h>
 
 extern FILE* log_fp;
 
@@ -41,7 +42,37 @@ extern FILE* log_fp;
 	} while(0)
 
 #define panic(format, ...) \
-	do { printf(format, ## __VA_ARGS__); putchar('\n'); abort(); exit(1); } while (0)
+	do { printf(format, ## __VA_ARGS__); putchar('\n'); printf("%s", c_normal); abort(); exit(1); } while (0)
+
+#define panic_to_ui(format, ...) \
+	do { \
+        printf("\n"); \
+        printf("%s", c_red c_bold); \
+        printf("  panic at %s:%d:%s\n", __FILE__, __LINE__, __func__); \
+        printf("  "); \
+        printf(format, ## __VA_ARGS__); \
+        printf("%s", c_normal); \
+        printf("\n"); \
+        \
+        int cnt = 0; \
+        while (1) { \
+            char buf[100]; \
+            printf("%s", c_purple); \
+            printf("  input 'a' to abort nemu (default)\n"); \
+            printf("  input 'u' to go back to ui\n"); \
+            printf("%s", c_normal); \
+            printf("(panic) "); \
+            char *r = fgets(buf, sizeof(buf), stdin); \
+            if (strstr(buf, "u")) { \
+                extern jmp_buf jbuf; \
+                longjmp(jbuf, 2); \
+            } \
+            if (++cnt >= 3 || !r || !*buf || *buf == '\n' || strstr(buf, "a")) { \
+                abort(); \
+                exit(1); \
+            } \
+        } \
+    } while (0)
 
 #endif
 

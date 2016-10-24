@@ -44,7 +44,7 @@ void create_mmap(int base, int size)
 {
     void *p = mmap((void *) base, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
     if ((int)p != base) {
-        printf(c_bold c_red "MMAP %08x FAILED: p=%p errno=%s\n" c_normal, base, p, strerror(errno));
+        printf(c_bold c_red "MMAP at %08x with length %08x FAILED: p=%p errno=%s\n" c_normal, base, (unsigned) size, p, strerror(errno));
         exit(1);
     }
 }
@@ -52,9 +52,9 @@ void change_permission(void *base)
 {
     int ret;
     base = (void *)((int)base & 0xfffff000); // assume page size is 4K
-    ret = mprotect(base, 0x100, PROT_READ | PROT_WRITE | PROT_EXEC);
+    ret = mprotect(base, 0x1000, PROT_READ | PROT_WRITE | PROT_EXEC);
     if (ret != 0) {
-        printf(c_bold c_red "MPROTECT %08x FAILED: errno=%s\n" c_normal, base, strerror(errno));
+        printf(c_bold c_red "MPROTECT at %p FAILED: errno=%s\n" c_normal, base, strerror(errno));
         exit(1);
     }
     while (ret == 0) ret = mprotect((base += 0x100), 0x100, PROT_READ | PROT_WRITE | PROT_EXEC);

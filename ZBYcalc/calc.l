@@ -69,6 +69,11 @@ YYSTYPE get_reg_val(char *name)
 
 #ifdef CALC_LEX
 
+int yyerror(char* msg)
+        {
+        printf("Error: %s encountered at line number:%d\n", msg, yylineno);
+        }
+        
 int main()
 {
     int token;

@@ -30,13 +30,13 @@ hwaddr_t __attribute__((noinline)) page_translate_nocache(lnaddr_t addr)
     
     //printf("pde=%08x\n", pde);
     
-#ifdef DEBUG
+#if 1
     if (!PAGE_PRESENT(pde)) {
         if (safe_read_flag) safe_read_failed = 1;
         else {
             sprintf(page_errbuf, "pde : pte not present, addr=%08X, eip=%08X", addr, cpu.eip);
             if (page_nopanic) { page_errflag = 1; return 0; }
-            panic("%s", page_errbuf);
+            panic_to_ui("%s", page_errbuf);
         }
     }
 #else
@@ -48,13 +48,13 @@ hwaddr_t __attribute__((noinline)) page_translate_nocache(lnaddr_t addr)
     unsigned pte = hwaddr_read(pgtable + page * 4, 4);
     
     //printf("pte=%08x\n", pte);
-#ifdef DEBUG
+#if 1
     if (!PAGE_PRESENT(pte)) {
         if (safe_read_flag) safe_read_failed = 1;
         else {
             sprintf(page_errbuf, "pte: page frame not present, addr=%08X, eip=%08X", addr, cpu.eip);
             if (page_nopanic) { page_errflag = 1; return 0; }
-            panic("%s", page_errbuf);
+            panic_to_ui("%s", page_errbuf);
         }
     }
 #else
@@ -177,6 +177,34 @@ hwaddr_t page_translate(lnaddr_t addr)
 // ================= NO TLB ===================
 
 #else // no tlb
+#if 0
+// temp code for faster-qemu-PPT
+static unsigned char myTLBvalid[1 << 20];
+static unsigned myTLB[1 << 20];
+hwaddr_t page_translate(lnaddr_t addr)
+{
+    unsigned vpn = addr >> 12;
+    if (myTLBvalid[vpn]) {
+        return myTLB[vpn] | (addr & 0xfff);
+    } else {
+        unsigned result = page_translate_nocache(addr);
+        myTLB[vpn] = result & ~0xfff;
+        myTLBvalid[vpn] = 1;
+        return result;
+    }
+}
+void flush_tlb()
+{
+    memset(myTLBvalid, 0, sizeof(myTLBvalid));
+    extern void flush_myTLB2(); flush_myTLB2();
+}
+void show_tlb()
+{
+    printf("%s  no tlb%s\n", c_red, c_normal);
+}
+#endif
+
+#if 1
 hwaddr_t page_translate(lnaddr_t addr)
 {
     return page_translate_nocache(addr);
@@ -188,5 +216,7 @@ void show_tlb()
 {
     printf("%s  no tlb%s\n", c_red, c_normal);
 }
+#endif
+
 #endif
 

@@ -283,6 +283,10 @@
 #define __IEEE_BIG_ENDIAN
 #endif
 
+#ifdef __FT32__
+#define __IEEE_LITTLE_ENDIAN
+#endif
+
 #ifdef __mcore__
 #define __IEEE_BIG_ENDIAN
 #endif
@@ -316,7 +320,7 @@
 #define _DOUBLE_IS_32BITS
 #endif
 
-#if defined(__or32__) || defined(__or1k__) || defined(__or16__)
+#if defined(__or1k__) || defined(__OR1K__) || defined(__OR1KND__)
 #define __IEEE_BIG_ENDIAN
 #endif
 
@@ -379,7 +383,9 @@
 #ifdef __RL78__
 #define __IEEE_LITTLE_ENDIAN
 #define __SMALL_BITFIELDS	/* 16 Bit INT */
+#ifndef __RL78_64BIT_DOUBLES__
 #define _DOUBLE_IS_32BITS
+#endif
 #endif
 
 #ifdef __RX__
@@ -411,6 +417,10 @@
 # else
 #  define __IEEE_LITTLE_ENDIAN
 # endif
+#endif
+
+#ifdef __VISIUM__
+#define __IEEE_BIG_ENDIAN
 #endif
 
 #ifndef __IEEE_BIG_ENDIAN

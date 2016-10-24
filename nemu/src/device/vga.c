@@ -47,6 +47,7 @@ void vga_vmem_io_handler(hwaddr_t addr, size_t len, bool is_write) {
 	}
 }
 
+
 void do_update_screen_graphic_mode() {
 	int i, j;
 	uint8_t (*vmem) [CTR_COL] = vmem_base;
@@ -72,6 +73,25 @@ void do_update_screen_graphic_mode() {
 }
 
 void update_screen() {
+#ifdef USE_VERY_FAST_MEMORY_VER2
+    extern uint8_t *hw_mem;
+    vmem_base = hw_mem + 0xa0000;
+    static uint8_t old_vmem_base[0x20000];
+    uint8_t (*old_vmem) [CTR_COL] = (void *) old_vmem_base;
+    uint8_t (*vmem) [CTR_COL] = vmem_base;
+    
+
+    int i;
+    for (i = 0; i < CTR_ROW; i++)
+        if (memcmp(old_vmem[i], vmem[i], CTR_COL) != 0) {
+            line_dirty[i] = true;
+            vmem_dirty = true;
+            //printf("dirty!\n");
+        }
+    if (vmem_dirty) {
+        memcpy(old_vmem_base, vmem_base, 0x20000);
+    }
+#endif
 	if(vmem_dirty) {
 		do_update_screen_graphic_mode();
 		vmem_dirty = false;

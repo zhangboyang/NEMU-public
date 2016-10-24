@@ -5,6 +5,8 @@
 
 typedef int (*helper_fun)(swaddr_t);
 static make_helper(_2byte_esc);
+static make_helper(lock_prefix);
+static make_helper(gs_prefix);
 
 #define make_group(name, item0, item1, item2, item3, item4, item5, item6, item7) \
 	static helper_fun concat(opcode_table_, name) [8] = { \
@@ -34,32 +36,32 @@ make_group(group1_sx_v,
 
 /* 0xc0 */
 make_group(group2_i_b,
-	inv, inv, inv, inv, 
+	rol_rm_imm_b, inv, inv, inv, 
 	shl_rm_imm_b, shr_rm_imm_b, inv, sar_rm_imm_b)
 
 /* 0xc1 */
 make_group(group2_i_v,
-	inv, inv, inv, inv, 
+	rol_rm_imm_v, inv, inv, inv, 
 	shl_rm_imm_v, shr_rm_imm_v, inv, sar_rm_imm_v)
 
 /* 0xd0 */
 make_group(group2_1_b,
-	inv, inv, inv, inv, 
+	rol_rm_1_b, inv, inv, inv, 
 	shl_rm_1_b, shr_rm_1_b, inv, sar_rm_1_b)
 
 /* 0xd1 */
 make_group(group2_1_v,
-	inv, inv, inv, inv, 
+	rol_rm_1_v, inv, inv, inv, 
 	shl_rm_1_v, shr_rm_1_v, inv, sar_rm_1_v)
 
 /* 0xd2 */
 make_group(group2_cl_b,
-	inv, inv, inv, inv, 
+	rol_rm_cl_b, inv, inv, inv, 
 	shl_rm_cl_b, shr_rm_cl_b, inv, sar_rm_cl_b)
 
 /* 0xd3 */
 make_group(group2_cl_v,
-	inv, inv, inv, inv, 
+	rol_rm_cl_v, inv, inv, inv, 
 	shl_rm_cl_v, shr_rm_cl_v, inv, sar_rm_cl_v)
 
 /* 0xf6 */
@@ -119,7 +121,7 @@ helper_fun opcode_table [256] = {
 /* 0x58 */	pop_r_v, pop_r_v, pop_r_v, pop_r_v,
 /* 0x5c */	pop_r_v, pop_r_v, pop_r_v, pop_r_v,
 /* 0x60 */	pushad, popad, inv, inv,
-/* 0x64 */	inv, inv, data_size, addr_size,
+/* 0x64 */	inv, gs_prefix, data_size, addr_size,
 /* 0x68 */	push_i_v, imul_i_rm2r_v, push_i_b, imul_si_rm2r_v,
 /* 0x6c */	inv, inv, inv, inv,
 /* 0x70 */	jo_i_b, jno_i_b, jb_i_b, jae_i_b,
@@ -137,7 +139,7 @@ helper_fun opcode_table [256] = {
 /* 0xa0 */	mov_moffs2a_b, mov_moffs2a_v, mov_a2moffs_b, mov_a2moffs_v,
 /* 0xa4 */	movs_b, movs_v, cmps_b, cmps_v,
 /* 0xa8 */	test_i2a_b, test_i2a_v, stos_b, stos_v,
-/* 0xac */	inv, inv, inv, inv,
+/* 0xac */	inv, inv, scas_b, scas_v,
 /* 0xb0 */	mov_i2r_b, mov_i2r_b, mov_i2r_b, mov_i2r_b,
 /* 0xb4 */	mov_i2r_b, mov_i2r_b, mov_i2r_b, mov_i2r_b,
 /* 0xb8 */	mov_i2r_v, mov_i2r_v, mov_i2r_v, mov_i2r_v, 
@@ -154,7 +156,7 @@ helper_fun opcode_table [256] = {
 /* 0xe4 */	inv, inv, inv, inv,
 /* 0xe8 */	call_i_v, jmp_i_v, jmpfar, jmp_i_b,
 /* 0xec */	inb, inl, outb, outl,
-/* 0xf0 */	inv, inv, inv, rep,
+/* 0xf0 */	lock_prefix, inv, rep, rep,
 /* 0xf4 */	hlt, cmc, group3_b, group3_v,
 /* 0xf8 */	clc, stc, cli, sti,
 /* 0xfc */	cld, std, group4, group5
@@ -205,10 +207,10 @@ helper_fun _2byte_opcode_table [256] = {
 /* 0xa4 */	shldi_v, shld_cl_v, inv, inv,
 /* 0xa8 */	inv, inv, inv, inv,
 /* 0xac */	shrdi_v, shrd_cl_v, inv, imul_rm2r_v,
-/* 0xb0 */	inv, inv, inv, inv, 
+/* 0xb0 */	cmpxchg_r2rm_b, cmpxchg_r2rm_v, inv, inv, 
 /* 0xb4 */	inv, inv, movzb_rm2r_v, movzw_rm2r_v, 
-/* 0xb8 */	inv, inv, bt_i2rm_v, inv,
-/* 0xbc */	inv, inv, movsb_rm2r_v, movsw_rm2r_v,
+/* 0xb8 */	inv, inv, bt_rm_imm_v, inv,
+/* 0xbc */	bsf_rm2r_v, bsr_rm2r_v, movsb_rm2r_v, movsw_rm2r_v,
 /* 0xc0 */	inv, inv, inv, inv,
 /* 0xc4 */	inv, inv, inv, inv,
 /* 0xc8 */	inv, inv, inv, inv,
@@ -231,6 +233,7 @@ helper_fun _2byte_opcode_table [256] = {
 
 
 make_helper(exec) {
+    assert(cpu.seg_gs_prefix == 0);
 #ifdef USE_VERY_FAST_MEMORY
     if (unlikely(cpu.fast_data_base != GET_PAGE_NUMBER_INPLACE(eip))) {
         cpu.fast_data_base = GET_PAGE_NUMBER_INPLACE(eip);
@@ -246,6 +249,21 @@ static make_helper(_2byte_esc) {
 	uint32_t opcode = instr_fetch(eip, 1);
 	ops_decoded.opcode = opcode | 0x100;
 	return _2byte_opcode_table[opcode](eip) + 1; 
+}
+
+static make_helper(lock_prefix) {
+    // we ignore lock prefix here
+	eip ++;
+	uint32_t opcode = instr_fetch(eip, 1);
+	return opcode_table[opcode](eip) + 1; 
+}
+
+static make_helper(gs_prefix) {
+    cpu.seg_gs_prefix = 1;
+	eip ++;
+//	uint32_t opcode = instr_fetch(eip, 1);
+//	return opcode_table[opcode](eip) + 1;
+    return gsinstr(eip) + 1;
 }
 
 void push_vm_stack_dword(uint32_t val)

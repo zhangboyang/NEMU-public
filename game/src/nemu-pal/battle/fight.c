@@ -372,19 +372,20 @@ PAL_UpdateTimeChargingUnit(
 
 --*/
 {
-   g_Battle.flTimeChargingUnit = pow(int2F(PAL_GetPlayerDexterity(0) + 5), 0);
-   g_Battle.flTimeChargingUnit = F_div_int(g_Battle.flTimeChargingUnit, 
-		   PAL_GetPlayerDexterity(0));
+   g_Battle.flTimeChargingUnit = (FLOAT)(pow(PAL_GetPlayerDexterity(0) + 5, 0.3));
+   g_Battle.flTimeChargingUnit /= PAL_GetPlayerDexterity(0);
 
    if (gpGlobals->bBattleSpeed > 1)
    {
-      g_Battle.flTimeChargingUnit = F_div_int(g_Battle.flTimeChargingUnit, (gpGlobals->bBattleSpeed + 1) >> 1);
+      g_Battle.flTimeChargingUnit /= 1 + (gpGlobals->bBattleSpeed - 1) * 0.5;
    }
    else
    {
       g_Battle.flTimeChargingUnit /= 1.2f;
-      g_Battle.flTimeChargingUnit = F_div_F(g_Battle.flTimeChargingUnit, f2F(1.2));
    }
+    //printf("g_Battle.flTimeChargingUnit=%f\n", g_Battle.flTimeChargingUnit);
+    //printf("PAL_GetPlayerDexterity(0)=%d\n", PAL_GetPlayerDexterity(0));
+    //printf("gpGlobals->bBattleSpeed=%d\n", gpGlobals->bBattleSpeed);
 }
 
 FLOAT
@@ -419,11 +420,12 @@ PAL_GetTimeChargingSpeed(
    //
    // The battle should be faster when using Auto-Battle
    //
-   if (!gpGlobals->fAutoBattle)
+   if (gpGlobals->fAutoBattle)
    {
-      wDexterity /= 4;
+      wDexterity *= 3;
    }
 
+   //printf("PAL_GetTimeChargingSpeed(): %f %d\n", g_Battle.flTimeChargingUnit, (int) wDexterity);
    return F_mul_int(g_Battle.flTimeChargingUnit, wDexterity);
 }
 
@@ -1260,8 +1262,9 @@ PAL_BattleStartFrame(
       {
       case kFighterWait:
          wDexterity = PAL_GetPlayerActualDexterity(wPlayerRole);
-         g_Battle.rgPlayer[i].flTimeMeter += F_mul_F(PAL_GetTimeChargingSpeed(wDexterity),
-				g_Battle.rgPlayer[i].flTimeSpeedModifier);
+         g_Battle.rgPlayer[i].flTimeMeter +=F_mul_F(PAL_GetTimeChargingSpeed(wDexterity), g_Battle.rgPlayer[i].flTimeSpeedModifier);
+         //asm volatile("int3");
+         //printf("timemeter=%d,%f,%f\n", (int)wDexterity, PAL_GetTimeChargingSpeed(wDexterity), g_Battle.rgPlayer[i].flTimeSpeedModifier);
          break;
 
       case kFighterCom:

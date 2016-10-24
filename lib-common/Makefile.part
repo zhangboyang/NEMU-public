@@ -1,6 +1,7 @@
 # This file will be included by the Makefile under the project directory.
 
 FLOAT_OBJ := $(FLOAT:.a=.o)
+FLOAT_CFLAGS_EXTRA := -fno-builtin -fno-omit-frame-pointer -fno-stack-protector
 
 $(FLOAT): $(FLOAT_OBJ)
 	ar r $(FLOAT) $(FLOAT_OBJ)
@@ -8,4 +9,4 @@ $(FLOAT): $(FLOAT_OBJ)
 # TODO: write a rule for generating $(FLOAT_OBJ)
 $(FLOAT_OBJ): lib-common/FLOAT.c
 	mkdir -p obj/lib-common
-	gcc -c -m32 -fno-builtin -fno-stack-protector -I lib-common -o $(FLOAT_OBJ) lib-common/FLOAT.c
+	$(TARGETCC) $(FLOAT_CFLAGS_EXTRA) -o $(FLOAT_OBJ) -c lib-common/FLOAT.c -Ilib-common

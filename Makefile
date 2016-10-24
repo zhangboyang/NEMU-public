@@ -4,18 +4,26 @@
 .PHONY: nemu entry all_testcase kernel run gdb test submit clean count
 
 CC := gcc
+HOSTCC := gcc
+TARGETCC := i386-nemu-linux-musl-gcc
 LD := ld
+HOSTLD := ld
+TARGETLD := i386-nemu-linux-musl-ld
+CXX := g++
+HOSTCXX := g++
+TARGETCXX := i386-nemu-linux-musl-g++
+
 CFLAGS := -MMD -Wall -Werror -c -g
 
 LIB_COMMON_DIR := lib-common
 NEWLIBC_DIR := $(LIB_COMMON_DIR)/newlib
-NEWLIBC := $(NEWLIBC_DIR)/libc.a
+NEWLIBC := $(NEWLIBC_DIR)/newlib.a
 FLOAT := obj/$(LIB_COMMON_DIR)/FLOAT.a
 
 include config/Makefile.git
 include config/Makefile.build
 
-all: nemu
+all: nemu all_testcase kernel game entry
 
 
 ##### rules for building the project #####
@@ -27,7 +35,7 @@ include kernel/Makefile.part
 include game/Makefile.part
 
 nemu: $(nemu_BIN) $(FLOAT)
-all_testcase: $(testcase_BIN) $(testcase_BIN_SOBJS)
+all_testcase: $(testcase_BIN)
 kernel: $(kernel_BIN)
 game: $(game_BIN)
 
@@ -55,7 +63,7 @@ clean: clean-cpp
 ##### some convinient rules #####
 
 USERPROG := $(game_BIN)
-#USERPROG := obj/testcase/add-longlong
+#USERPROG := obj/testcase/checkzero
 ENTRY := $(kernel_BIN)
 
 entry: $(ENTRY)

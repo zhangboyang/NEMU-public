@@ -11,6 +11,7 @@
 #include "data-mov/cmovcc.h"
 #include "data-mov/pushad.h"
 #include "data-mov/popad.h"
+#include "data-mov/cmpxchg.h"
 
 #include "arith/dec.h"
 #include "arith/inc.h"
@@ -42,6 +43,9 @@
 #include "logic/test.h"
 #include "logic/setcc.h"
 #include "logic/bt.h"
+#include "logic/bsf.h"
+#include "logic/bsr.h"
+#include "logic/rol.h"
 
 #include "flag-ctl/flag-ctl.h"
 
@@ -49,6 +53,7 @@
 #include "string/stos.h"
 #include "string/movs.h"
 #include "string/cmps.h"
+#include "string/scas.h"
 
 #include "misc/misc.h"
 #include "special/fake_fpu.h"
@@ -65,5 +70,68 @@
 #include "io/out.h"
 #include "io/in.h"
 
+#include "mman/mov.h"
+#include "mman/lgdt.h"
+#include "mman/lidt.h"
+#include "mman/jmpfar.h"
+
+#include "intr/int.h"
+#include "intr/iretd.h"
+#include "intr/hlt.h"
+
+#include "io/out.h"
+#include "io/in.h"
+
+#include "mman/mov.h"
+#include "mman/lgdt.h"
+#include "mman/lidt.h"
+#include "mman/jmpfar.h"
+
+#include "intr/int.h"
+#include "intr/iretd.h"
+#include "intr/hlt.h"
+
+#include "io/out.h"
+#include "io/in.h"
+
+#include "mman/mov.h"
+#include "mman/lgdt.h"
+#include "mman/lidt.h"
+#include "mman/jmpfar.h"
+
+#include "intr/int.h"
+#include "intr/iretd.h"
+#include "intr/hlt.h"
+
+#include "io/out.h"
+#include "io/in.h"
+
+#include "mman/mov.h"
+#include "mman/lgdt.h"
+#include "mman/lidt.h"
+#include "mman/jmpfar.h"
+
+#include "intr/int.h"
+#include "intr/iretd.h"
+#include "intr/hlt.h"
+
+#include "io/out.h"
+#include "io/in.h"
+
+#include "mman/mov.h"
+#include "mman/lgdt.h"
+#include "mman/lidt.h"
+#include "mman/jmpfar.h"
+
+#include "intr/int.h"
+#include "intr/iretd.h"
+#include "intr/hlt.h"
+
+#include "io/out.h"
+#include "io/in.h"
+
 #include "special/special.h"
 #include "special/zby.h"
+#include "special/gsinstr.h"
+#include "special/fake_fpu.h"
+

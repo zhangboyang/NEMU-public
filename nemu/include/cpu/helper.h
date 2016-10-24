@@ -54,7 +54,7 @@ extern Operands ops_decoded;
 /* stack operations */
 #define PUSH_DWORD(data) ({ cpu.ESP -= 4; MEM_W_DWORD(R_SS, cpu.ESP, (data)); })
 #define PUSH_WORD(data) ({ cpu.ESP -= 2; MEM_W_WORD(R_SS, cpu.ESP, (data) & 0xffff); })
-#define PUSH_BYTE(data) ({ cpu.ESP -= 4; MEM_W_DWORD(R_SS, cpu.ESP, (data) & 0xff); }) // push BTYE is just push DWORD
+#define PUSH_BYTE(data) ({ cpu.ESP -= 4; MEM_W_DWORD(R_SS, cpu.ESP, (unsigned) (int) (signed char) ((data) & 0xff)); }) // push BTYE is just push DWORD (sign-extended)
 #define POP_DWORD() ({ uint32_t ret = MEM_R_DWORD(R_SS, cpu.ESP); cpu.ESP += 4; ret; })
 #define POP_WORD() ({ uint32_t ret = MEM_R_WORD(R_SS, cpu.ESP); cpu.ESP += 2; ret; })
 

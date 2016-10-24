@@ -171,6 +171,8 @@ typedef struct {
     uint32_t seg_limit[6];
     
     int seg_is_flat;
+
+    int seg_gs_prefix;
     
 } CPU_state;
 

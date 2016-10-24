@@ -17,6 +17,9 @@ static void mov_cr_do_execute_rm2r() { // move gpr to cr
 	    extern void make_translate_flushed();
 	    make_translate_flushed();
 	    #endif
+	    #ifdef USE_VERY_FAST_MEMORY_VER2
+	    extern void vfmemory2_flush();
+	    #endif
 	}
 }
 

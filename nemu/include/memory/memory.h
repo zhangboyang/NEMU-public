@@ -60,11 +60,12 @@ void hwaddr_write_nocache(hwaddr_t, size_t, uint32_t);
 #define PAGE_NUMBER_NOT_EQU(addr, raddr) (GET_PAGE_NUMBER_INPLACE((addr) ^ (raddr)) != 0)
 #define ADDR_CROSS_PAGE(addr, len) (PAGE_NUMBER_NOT_EQU((addr), (addr) + (len) - 1))
 
-#ifndef USE_VERY_FAST_MEMORY
+#if !defined(USE_VERY_FAST_MEMORY) && !defined(USE_VERY_FAST_MEMORY_VER2)
 uint32_t swaddr_read(swaddr_t, size_t, uint8_t);
 void swaddr_write(swaddr_t, size_t, uint32_t, uint8_t);
 #else
 #include "memory/vfmemory.h"
+#include "memory/vfmemory2.h"
 #endif
 
 #endif

@@ -14,7 +14,8 @@ static inline void do_execute () {
 	 * in PA will test the flags updated by this instruction.
 	 */
 	INVF_ALU(); /* set flags to invalid, since we are too lazy to update EFLAGS */
-
+    WRITEF(ZF, !dest);
+    
 	print_asm_template2();
 }
 

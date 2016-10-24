@@ -2,8 +2,9 @@
 #include "burst.h"
 #include "misc.h"
 
-#ifndef USE_VERY_FAST_MEMORY
+#if !defined(USE_VERY_FAST_MEMORY) && !defined(USE_VERY_FAST_MEMORY_VER2)
 
+#ifndef NO_DRAM
 /* Simulate the (main) behavor of DRAM.
  * Although this will lower the performace of NEMU, it makes
  * you clear about how DRAM perform read/write operations.
@@ -136,5 +137,35 @@ void dram_write(hwaddr_t addr, size_t len, uint32_t data) {
 		ddr3_write(addr + BURST_LEN, temp + BURST_LEN, mask + BURST_LEN);
 	}
 }
+#else
+
+// NO_DRAM
+
+#define HW_MEM_SIZE (128 * 1048576)
+uint8_t fast_mem[HW_MEM_SIZE];
+uint8_t *hw_mem = fast_mem;
+
+uint32_t dram_read(hwaddr_t addr, size_t len)
+{
+    return (*(uint32_t *)(hw_mem + addr)) & ((1LL << (len << 3)) - 1);
+}
+
+void dram_write(hwaddr_t addr, size_t len, uint32_t data)
+{
+    if (len == 4) {
+        *(uint32_t *)(hw_mem + addr) = data;
+    } else if (len == 2) {
+        *(uint16_t *)(hw_mem + addr) = (uint16_t) data;
+    } else {
+        assert(len == 1);
+        *(uint8_t *)(hw_mem + addr) = (uint8_t) data;
+    }
+}
+
+void init_ddr3()
+{
+    // do nothing
+}
+#endif
 
 #endif

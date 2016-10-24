@@ -3,20 +3,23 @@
 !*/
 !Makefile*
 !*.[cSh]
+!*.cpp
 !*.sh
 !test.sh
 !.gitignore
 !README.md
-!lib-common/newlib/libc.a
+!lib-common/newlib/newlib.a
 !kernel/src/memory/mm_malloc.o
 
 !*.pdf
 !*.wps
+!*.pptx
 
 !*.l
 !*.y
 !nemu/*.txt
 !nemu/ZBYnotes/*.txt
+!plotlinecount.gnu
 
 ZBYcalc/calc.lex.c
 ZBYcalc/calc.tab.c

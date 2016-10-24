@@ -259,7 +259,7 @@ RandomFloat(
    if (to <= from)
       return from;
 
-   return from + lrand() % (to - from + 1);
+   return from + (float) lrand() / (INT_MAX / (to - from));
 }
 
 void

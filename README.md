@@ -1,7 +1,17 @@
 # ZBY 的公开版 PA
 仅供参考、对拍使用，抹掉了所有 git log。
-当前进度在 PA4，如果要切回之前时间点，把对应的宏、Makefile 改回去即可。
+所有实验报告在 REPORT 目录下。当前进度在 PA4，如果要切回之前时间点，把对应的宏、Makefile 改回去即可。
 
+需要自己制作 NEMU 的软浮点工具链，这样直接生成就是x86软浮点代码（混合使用musl-libc/newlib），不再需要FLOAT了。
+制作工具链的方法：https://github.com/zhangboyang/NEMU-toolchain
+
+另外制作完工具链后，可以直接在NEMU中运行C++程序。例如 
+```sh
+i386-nemu-linux-musl-g++ -o hello hello.cpp
+obj/nemu/nemu hello
+```
+
+如果没有自己的工具链，需要切回之前的commit。（就是那个标着 THIS IS THE LAST VERSION ... 的）
 
 # 计算机系统基础 课程大作业
 NEMU 是复旦大学计算机系统基础课的大作业，旨在实现一个教学用的 x86 虚拟机。

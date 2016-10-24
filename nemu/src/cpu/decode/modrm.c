@@ -1,7 +1,7 @@
 #include "cpu/decode/modrm.h"
 #include "cpu/helper.h"
 
-#ifndef USE_VERY_FAST_MEMORY
+#if !defined(USE_VERY_FAST_MEMORY) && !defined(USE_VERY_FAST_MEMORY_VER2)
 int load_addr(swaddr_t eip, ModR_M *m, Operand *rm) {
 	assert(m->mod != 3);
 
@@ -173,6 +173,7 @@ static inline int read_ModR_M_with_size(swaddr_t eip, Operand *rm, Operand *reg,
 	}
 	else {
 		int instr_len = load_addr(eip, &m, rm);
+        //if (unlikely(cpu.seg_gs_prefix)) rm->sreg = R_GS;
 		rm->val = swaddr_read(rm->addr, size, rm->sreg);
 		return instr_len;
 	}

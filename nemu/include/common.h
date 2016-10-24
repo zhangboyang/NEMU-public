@@ -17,6 +17,7 @@
 #endif
 
 
+/* LOGFILE OPTION, NOTE: VERY SLOW */
 //#define LOG_FILE
 
 #include "debug.h"
@@ -69,7 +70,12 @@ typedef union {
 
 /* ZBY: faster DRAM */
 #ifndef DEBUG
-    #define USE_VERY_FAST_MEMORY
+    #define USE_VERY_FAST_MEMORY_VER2
+        #define VFMEMORY2_IDENTITY_MAP
+        // don't forget to add LDFLAGS if you want to use identity map
+        // see nemu/src/memory/vfmemory2.c for details
+    //#define USE_VERY_FAST_MEMORY
+    //#define NO_DRAM
 #endif
 
 /* ZBY: use tlb when page-translate */

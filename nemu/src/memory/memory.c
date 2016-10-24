@@ -14,7 +14,7 @@ extern hwaddr_t page_translate(lnaddr_t addr);
 /* Memory accessing interfaces */
 
 
-#ifndef USE_VERY_FAST_MEMORY
+#if !defined(USE_VERY_FAST_MEMORY) && !defined(USE_VERY_FAST_MEMORY_VER2)
 // ================ HWADDR ==================
 
 uint32_t hwaddr_read_nocache(hwaddr_t addr, size_t len) {
@@ -170,13 +170,75 @@ void swaddr_write_slow(swaddr_t addr, size_t len, uint32_t data, uint8_t sreg) {
 }
 
 
-#ifndef USE_VERY_FAST_MEMORY
+#if !defined(USE_VERY_FAST_MEMORY) && !defined(USE_VERY_FAST_MEMORY_VER2)
+#if 0
+// temp code for faster-qemu-PPT
+int __attribute__((noinline)) verify_page_translate(lnaddr_t addr, hwaddr_t hwaddr);
+uint32_t myTLB2[1 << 20];
+uint32_t __attribute__((noinline)) swaddr_read_miss(swaddr_t addr, size_t len, uint8_t sreg)
+{
+    uint32_t pa1 = page_translate(addr);
+    int pa1_mmio_id = is_mmio(pa1);
+    if (pa1_mmio_id < 0) {
+        if (verify_page_translate(addr + 0x1000, pa1 + 0x1000)) {
+            if (is_mmio(page_translate(addr + 0x1000)) < 0) {
+                myTLB2[addr >> 12] = pa1 & ~0xFFF;
+            }
+        }
+        return hwaddr_read(pa1, len);
+    } else {
+        return mmio_read(pa1, len, pa1_mmio_id);
+    }
+}
+void flush_myTLB2()
+{
+    printf("FLUSH TLB2!!!\n");
+    memset(myTLB2, -1, sizeof(myTLB2));
+}
+uint32_t inline swaddr_read(swaddr_t addr, size_t len, uint8_t sreg)
+{
+    uint32_t result = myTLB2[addr >> 12];
+    if (likely((result & 0xFFF) == 0)) {
+        return dram_read(result | (addr & 0xFFF), len);
+    } else {
+        return swaddr_read_miss(addr, len, sreg);
+    }
+}
+void __attribute__((noinline)) swaddr_write_miss(swaddr_t addr, size_t len, uint32_t data, uint8_t sreg)
+{
+    uint32_t pa1 = page_translate(addr);
+    int pa1_mmio_id = is_mmio(pa1);
+    if (pa1_mmio_id < 0) {
+        if (verify_page_translate(addr + 0x1000, pa1 + 0x1000)) {
+            if (is_mmio(page_translate(addr + 0x1000)) < 0) {
+                myTLB2[addr >> 12] = pa1 & ~0xFFF;
+            }
+        }
+        hwaddr_write(pa1, len, data);
+    } else {
+        mmio_write(pa1, len, data, pa1_mmio_id);
+    }
+}
+void inline swaddr_write(swaddr_t addr, size_t len, uint32_t data, uint8_t sreg)
+{
+    uint32_t result = myTLB2[addr >> 12];
+    if (likely((result & 0xFFF)) == 0) {
+        dram_write(result | (addr & 0xFFF), len, data);
+    } else {
+        swaddr_write_miss(addr, len, data, sreg);
+    }
+}
+#endif
+
+#if 1
 uint32_t swaddr_read(swaddr_t addr, size_t len, uint8_t sreg) {
     return swaddr_read_slow(addr, len, sreg);
 }
 void swaddr_write(swaddr_t addr, size_t len, uint32_t data, uint8_t sreg) {
     swaddr_write_slow(addr, len, data, sreg);
 }
+#endif
+
 #endif
 
 // ================ UI: SAFE_SWADDR ==================

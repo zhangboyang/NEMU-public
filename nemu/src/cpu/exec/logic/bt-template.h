@@ -3,10 +3,7 @@
 #define instr bt
 
 static inline void do_execute () {
-    // it may cause invalid read since we read 4 bytes instead 1 byte when op->src is imm
-    // but it doesn't matter, since it's nearly impossible that
-    // the BT instruction is the last few instructions in last valid page
-    
+
 	uint8_t val = op_src->val;
 #if DATA_BYTE == 2
     val &= 15;
@@ -30,7 +27,7 @@ static inline void do_execute () {
 	print_asm_template2();
 }
 
-make_instr_helper(i2rm)
+make_instr_helper(rm_imm)
 make_instr_helper(r2rm)
 
 #include "cpu/exec/template-end.h"

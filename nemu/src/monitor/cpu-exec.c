@@ -34,6 +34,8 @@ void print_bin_instr(swaddr_t eip, int len) {
 void do_int3() {
 	printf("\nHit breakpoint at eip = 0x%08x\n", cpu.eip);
 	nemu_state = STOP;
+    cpu.EIP++;
+    longjmp(jbuf, 4);
 }
 
 
@@ -99,15 +101,29 @@ void cpu_exec(uint32_t n32) {
 	int le_flag = 0;
 #endif
 
-	setjmp(jbuf);
+    cpu.executed_instr_count = last_instr_count = DEV_CHECK_FREQ - 1;
 
-    if (unlikely(nemu_state != RUNNING)) { return; }
+
+
+	volatile int jval = setjmp(jbuf);
+    if (unlikely(jval != 0 && jval != 1)) { // if not caused by interrupt
+        if (jval == 2) {
+            // panic to ui
+            printf("%s  NEMU panic%s\n", c_red, c_normal);
+            nemu_state = END;
+        } else if (jval == 3) {
+            // hit nemu trap
+            nemu_state = END;
+        }
+        return;
+    }
+
+    //if (unlikely(nemu_state != RUNNING)) { return; }
 
     cpu.protect_eip = 0;
-    
-    
+
 #ifdef DEBUG
-	for(; n > 0; n --) {
+	for(; n > 0 && nemu_state == RUNNING; n --) {
 #else
     while (1) {
 #endif
@@ -250,9 +266,9 @@ void cpu_exec(uint32_t n32) {
 		            // NOTE:
 		            // DEV_CHECK_FREQ should be lower enough
 		            // or the jitter of device will be too large
-		            if (avg_jitter_percent > 10) {
-		                printf("%s%s  jitter is too high%s\n", c_red, c_bold, c_normal);
-		            }
+		            //if (avg_jitter_percent > 10) {
+		            //    printf("%s%s  jitter is too high%s\n", c_red, c_bold, c_normal);
+		            //}
 		            
         	    }
         	    
@@ -280,10 +296,12 @@ void cpu_exec(uint32_t n32) {
 
 	if(nemu_state == RUNNING) { nemu_state = STOP; }
 	
-    if (0) {
+#ifndef DEBUG
+    if (1) {
         if (txt_line_cnt != 0) {
             puts(c_green " next execution:" c_normal);
             show_as_code(0, 0);
         }
     }
+#endif
 }

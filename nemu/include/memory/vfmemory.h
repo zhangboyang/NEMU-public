@@ -48,11 +48,19 @@ static inline uint32_t hwaddr_read_no_mmio_check(hwaddr_t addr, size_t len)
 static inline void hwaddr_write_no_mmio_check(hwaddr_t addr, size_t len, uint32_t data)
 {
 //    memcpy(&fast_mem[addr], &data, len);
-    char *dst = fast_mem + addr;
+    /*char *dst = fast_mem + addr;
     do {
         *dst++ = data;
         data >>= 8;
-    } while (--len);
+    } while (--len);*/
+    if (len == 4) {
+        *(uint32_t *)(fast_mem + addr) = data;
+    } else if (len == 2) {
+        *(uint16_t *)(fast_mem + addr) = (uint16_t) data;
+    } else {
+        assert(len == 1);
+        *(uint8_t *)(fast_mem + addr) = (uint8_t) data;
+    }
 }
 
 static inline uint32_t swaddr_read(swaddr_t addr, size_t len, uint8_t sreg)

@@ -9,6 +9,11 @@
 
 #define CMOVCC_DO_EXECUTE(INSTR, TYPE, COND) \
 static inline void do_execute_with_instr_and_type(INSTR, TYPE)() { \
+    static int wflag = 0; \
+    if (!wflag) { \
+        printf("  %s%s instruction detected at CS:EIP = %04X:%08X%s\n", c_purple, str(INSTR), cpu.CS, cpu.EIP, c_normal); \
+        wflag = 1; \
+    } \
     if (COND) OPERAND_W(op_dest, op_src->val); \
     PRINT_CMOVCC_ASM(INSTR) \
 }
